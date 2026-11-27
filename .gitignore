@@ -4,3 +4,9 @@ dist/
 .openai/*.tmp
 *.sqlite
 *.sqlite-*
+publicacao-estatica/
+node_modules/
+.env*
+.wrangler/
+*.swp
+*.zip

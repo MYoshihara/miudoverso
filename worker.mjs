@@ -100,3 +100,4 @@ const worker = {
     return new Response(request.method === 'HEAD' ? null : body, { headers });
   }
 };
+export default worker;
