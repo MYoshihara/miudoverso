@@ -159,3 +159,28 @@ export const materials = [
 ].map(item => ({ ...item, author: bySlug.get(item.authorSlug).name }));
 
 export const materialPath = item => 'materiais/' + item.slug + '/';
+
+export const publicacoes = [
+  {
+    id: 'p1', authorSlug: 'lia-martins', when: 'há 2 horas', kind: 'Novo material', likes: 24, materialId: 'rimas',
+    text: 'Publiquei as Cartas de rimas! São cartas para recortar e brincar de encontrar palavras que terminam com o mesmo som. O PDF é gratuito.'
+  },
+  {
+    id: 'p2', authorSlug: 'bia-costa', when: 'ontem', kind: 'Dica', likes: 41,
+    text: 'Dica para recontar histórias: antes de pedir o reconto, deixe a criança organizar as imagens sozinha e só depois pergunte o que aconteceu primeiro. Ela se apropria da sequência e o reconto fica mais rico.'
+  },
+  {
+    id: 'p3', authorSlug: 'rafa-nunes', when: 'há 2 dias', kind: 'Experiência', likes: 18,
+    text: 'A roda de leitura do 2º ano virou um jogo: cada criança dizia uma palavra que começasse com a última letra da palavra anterior. Ninguém queria parar.'
+  },
+  {
+    id: 'p4', authorSlug: 'bia-costa', when: 'há 3 dias', kind: 'Portfólio', likes: 33,
+    image: { path: 'assets/oficina-de-narrativa.jpg', alt: 'Três cartões ilustram o plantio de uma semente, a rega de uma muda e um girassol aberto.' },
+    text: 'Registros da oficina de narrativa oral desta semana: plantar, regar e ver o girassol abrir. As crianças adoraram contar a história de trás para frente.'
+  },
+  {
+    id: 'p5', authorSlug: 'lia-martins', when: 'há 5 dias', kind: 'Recurso', likes: 15,
+    link: { href: 'sons/', label: 'Ouvir no Miudoverso Sons' },
+    text: 'Usei o som Chuva leve junto com a imagem do guarda-chuva do Miudoverso Visual. A turma inventou uma história inteira a partir dos dois.'
+  }
+];

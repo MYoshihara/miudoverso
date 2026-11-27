@@ -1,4 +1,4 @@
-const players = document.querySelectorAll('#sons audio');
+const players = document.querySelectorAll('audio');
 
 for (const player of players) {
   player.addEventListener('play', () => {
