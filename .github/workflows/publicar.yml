@@ -96,7 +96,18 @@ jobs:
 
       - name: Publicar
         if: steps.acesso.outputs.pronto == 'true'
+        env:
+          MIUDOVERSO_PREVIEW_DEMO: "1"
         run: npm run publicar
+
+      - name: Verificar a demonstração publicada
+        if: steps.acesso.outputs.pronto == 'true'
+        run: |
+          base=https://preview.ywd.com.br/miudoverso
+          pagina=$(curl --fail --silent --show-error --retry 3 --max-time 20 "$base/lista-de-espera/?deploy=$GITHUB_SHA")
+          grep -q 'data-demo' <<< "$pagina"
+          status=$(curl --silent --show-error --max-time 20 -o /dev/null -w '%{http_code}' "$base/api/lista-de-espera.php")
+          [[ "$status" == 403 || "$status" == 404 ]]
 
       - name: Apagar a chave do runner
         if: always()
