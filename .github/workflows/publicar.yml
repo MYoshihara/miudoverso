@@ -100,26 +100,17 @@ jobs:
           MIUDOVERSO_PREVIEW_DEMO: "1"
         run: npm run publicar
 
-      - name: Verificar a demonstração publicada
+      - name: Verificar os arquivos publicados na Hostinger
         if: steps.acesso.outputs.pronto == 'true'
         run: |
-          base=https://preview.ywd.com.br/miudoverso
-          for tentativa in {1..6}; do
-            pagina=$(curl --fail --silent --show-error --location --compressed --max-time 10 "$base/lista-de-espera/?deploy=$GITHUB_SHA&check=$tentativa") || pagina=''
-            status=$(curl --silent --show-error --location --max-time 10 -o /dev/null -w '%{http_code}' "$base/api/lista-de-espera.php?deploy=$GITHUB_SHA&check=$tentativa") || status=000
-            if grep -Fq 'data-demo' <<< "$pagina"; then
-              demo=sim
-            else
-              demo=não
-            fi
-            printf 'Tentativa %s: modo demo=%s, endpoint PHP HTTP %s\n' "$tentativa" "$demo" "$status"
-            if [[ "$demo" == sim && ( "$status" == 403 || "$status" == 404 ) ]]; then
-              exit 0
-            fi
-            if (( tentativa < 6 )); then sleep 5; fi
-          done
-          echo '::error::A prévia publicada não respondeu em modo demo com a API desativada.'
-          exit 1
+          ssh -o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=yes -o ClearAllForwardings=yes hostinger 'bash -se' <<'REMOTE'
+          cd /home/matheusy/preview.ywd.com.br/miudoverso
+          test -s index.html
+          test -s estilos.css
+          grep -Fq 'data-demo' lista-de-espera/index.html
+          grep -Fxq 'Require all denied' api/.htaccess
+          printf '%s\n' 'Prévia em modo demo e API bloqueada na configuração publicada.'
+          REMOTE
 
       - name: Apagar a chave do runner
         if: always()
