@@ -1,4 +1,4 @@
-const bookmark = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 4h12v16l-6-4-6 4z" stroke-linejoin="round"/></svg>';
+export const bookmark = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 4h12v16l-6-4-6 4z" stroke-linejoin="round"/></svg>';
 
 export function escapeHtml(value) {
   const entities = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -18,7 +18,7 @@ export function renderMaterialCard(item, href, saved = false) {
         <p class="label">${escapeHtml(item.label)} · ${escapeHtml(item.author)}</p>
         <h3>${title}</h3>
         <p>${escapeHtml(item.description)}</p>
-        <a class="text-link" href="${escapeHtml(href)}" aria-label="Ver material: ${title}">Ver material</a>
+        <a class="text-link card-link" href="${escapeHtml(href)}" aria-label="Ver material: ${title}">Ver material</a>
       </div>
     </article>`;
 }

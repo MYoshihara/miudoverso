@@ -20,6 +20,7 @@
     <a href="#dados-pessoais">Meus dados pessoais</a>
     <a href="#perfil-conecta">Meu perfil no Conecta</a>
     <a href="#materiais-salvos">Materiais salvos</a>
+    <a href="#seguindo">Seguindo</a>
   </nav>
   <div class="personal-layout">
     <form class="form personal-form" id="my-profile" method="post" hidden>
@@ -48,7 +49,7 @@
             <label class="personal-wide">Sobre mim<textarea name="about" rows="4" maxlength="1200"></textarea></label>
             <label class="personal-wide">Especialidades
               <small class="form-note">Informe uma por linha.</small>
-              <textarea name="specialties" rows="2" maxlength="400"></textarea>
+              <textarea name="specialties" rows="3" maxlength="400"></textarea>
             </label>
           </div>
         </fieldset>
@@ -85,10 +86,17 @@
       </div>
     </form>
     <noscript><p>Ative o JavaScript para editar seus dados e consultar seus favoritos.</p></noscript>
-    <aside class="personal-card personal-favorites" id="materiais-salvos" aria-labelledby="favorites-title">
-      <h2 id="favorites-title">Materiais salvos</h2>
-      <div id="favorites"></div>
-      <a class="text-link" href="@base@materiais/">Explorar materiais</a>
-    </aside>
+    <div class="personal-side">
+      <aside class="personal-card personal-favorites" id="materiais-salvos" aria-labelledby="favorites-title">
+        <h2 id="favorites-title">Materiais salvos</h2>
+        <div id="favorites"></div>
+        <a class="text-link" href="@base@materiais/">Explorar materiais</a>
+      </aside>
+      <aside class="personal-card personal-favorites" id="seguindo" aria-labelledby="following-title">
+        <h2 id="following-title">Profissionais que você segue</h2>
+        <div id="following"></div>
+        <a class="text-link" href="@base@conecta/">Ir para o Conecta</a>
+      </aside>
+    </div>
   </div>
 </section>

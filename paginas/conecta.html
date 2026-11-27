@@ -1,10 +1,42 @@
 <section class="conecta" id="conecta">
     <div class="wrap section">
       <div class="section-head">
-        <div><h1>Conecta</h1><p>Explore perfis, portfólios e lojinhas de profissionais de pedagogia e fonoaudiologia.</p></div>
-        <p class="demo">Perfis fictícios</p>
+        <div><h1><span class="brand-prefix">Miudoverso</span> Conecta</h1><p>Acompanhe o que profissionais de pedagogia e fonoaudiologia estão criando, siga quem inspira você e visite portfólios e lojinhas.</p></div>
+        <p class="demo">Perfis e publicações fictícios</p>
       </div>
-      <div class="grid" id="profiles">@profiles@</div>
-      <div class="creator"><div><h2>Você cria materiais autorais?</h2><p>Veja como seria enviar uma atividade ou um e-book para revisão.</p></div><button class="button outlined" id="publish" type="button">Simular publicação</button></div>
+      <div class="conecta-layout">
+        <div class="feed-column">
+          <form class="composer" id="composer" hidden>
+            <div class="composer-head">
+              <span class="avatar violet" id="composer-avatar" aria-hidden="true"></span>
+              <label for="composer-text">Compartilhe uma ideia, dica ou experiência</label>
+            </div>
+            <textarea id="composer-text" name="text" rows="3" maxlength="500" required placeholder="O que você aplicou ou criou esta semana?"></textarea>
+            <div class="composer-actions">
+              <p class="form-note">Demonstração: a publicação fica só neste navegador.</p>
+              <button class="button primary" type="submit">Publicar</button>
+            </div>
+          </form>
+          <div class="feed-toolbar">
+            <h2 id="feed-title">Feed</h2>
+            <div class="chips" role="group" aria-label="Filtrar feed" id="feed-filters">
+              <button class="chip" data-feed="todos" aria-pressed="true" type="button">Todos</button><button class="chip" data-feed="seguindo" aria-pressed="false" type="button">Seguindo</button>
+            </div>
+          </div>
+          <div class="feed" id="feed" aria-labelledby="feed-title">
+            <div class="feed" id="my-posts"></div>
+            @posts@
+            <div class="empty-state" id="feed-empty" hidden>
+              <p>Você ainda não segue ninguém por aqui. Siga profissionais para ver aqui o que elas e eles publicam.</p>
+              <button class="button outlined" type="button" data-feed="todos">Ver todas as publicações</button>
+            </div>
+          </div>
+        </div>
+        <aside class="conecta-aside" aria-labelledby="profiles-title">
+          <h2 id="profiles-title">Profissionais</h2>
+          <div class="profile-list" id="profiles">@profiles@</div>
+          <div class="creator"><div><h2>Você cria materiais autorais?</h2><p>Veja como seria enviar uma atividade ou um e-book para revisão.</p></div><button class="button outlined" id="publish" type="button">Simular publicação</button></div>
+        </aside>
+      </div>
     </div>
   </section>
