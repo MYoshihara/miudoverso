@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lista de espera | Miudoverso</title>
+<meta name="description" content="Participe da primeira turma do Miudoverso.">
+<link rel="icon" href="../assets/simbolo.webp" type="image/webp">
+<link rel="stylesheet" href="../estilos.css?v=1f5958a5a782">
+<script type="module" src="../miudoverso.js?v=1f5958a5a782"></script>
+</head>
+<body>
+<a class="skip button primary" href="#inicio">Ir para o conteúdo</a>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a href="../" class="brand"><img src="../assets/marca.webp" width="164" height="79" alt="Miudoverso — início"></a>
+    <nav aria-label="Navegação principal"><a href="../materiais/">Materiais</a><a href="../biblioteca/">Bibliotecas</a><a href="../conecta/">Conecta</a><a href="../inspira/">Inspira</a></nav>
+    <a class="button outlined account" href="../meu-miudoverso/">Meu Miudoverso</a>
+  </div>
+</header>
+<main id="inicio">
+<section class="wrap join waitlist-join" id="lista" aria-labelledby="join-title">
+    <div><h1 id="join-title">Lista de espera</h1><p>Conte o que você gostaria de fazer no Miudoverso. Vamos usar as respostas para escolher os primeiros recursos do piloto.</p></div>
+    <form id="waitlist" class="form" method="post" data-demo>
+      <label>E-mail de teste<input type="email" name="email" autocomplete="email" maxlength="254" required placeholder="voce@exemplo.com"></label>
+      <label>Área de atuação<select name="area" required><option value="">Selecione sua área</option><option value="pedagogia">Pedagogia</option><option value="fonoaudiologia">Fonoaudiologia</option><option value="outra">Outra área</option></select></label>
+      <label>O que você quer fazer primeiro?<select name="interesse" required><option value="">Selecione seu interesse</option><option value="baixar">Baixar materiais</option><option value="compartilhar">Compartilhar materiais</option><option value="vender">Vender e-books e atividades</option></select></label>
+      <label class="honeypot" aria-hidden="true">Deixe este campo em branco<input name="website" tabindex="-1" autocomplete="off"></label>
+      <label class="check"><input type="checkbox" name="consent" required><span>Quero receber o convite e novidades sobre o piloto por e-mail.</span></label>
+      <p class="form-note">Prévia de validação. Use um e-mail de exemplo para simular a inscrição.</p>
+      <button type="submit" class="button accent">Simular inscrição</button>
+      <p class="feedback" role="status"></p>
+    </form>
+  </section>
+
+  <section class="wrap section faq">
+    <h2>Sobre o piloto</h2>
+    <details><summary>Como funcionariam as vendas?</summary><p>O modelo em avaliação prevê uma comissão de 10% a 20% por venda. A proposta do plano Pro inclui mais downloads, destaque do perfil e loja sem limite de produtos.</p></details>
+    <details><summary>Que materiais poderei publicar?</summary><p>Materiais de autoria própria ou com autorização de distribuição. A plataforma prevê termos de uso, denúncia por material e revisão pela moderação.</p></details>
+    <details><summary>E os jogos, as imagens e os sons?</summary><p>Play, Visual e Sons ficam para uma próxima etapa. Imagens e sons podem estrear como itens do catálogo de Materiais.</p></details>
+  </section>
+
+</main>
+<footer><div class="wrap footer-inner"><a href="../"><img src="../assets/marca.webp" width="126" height="61" alt="Miudoverso — início"></a><p>Um universo de pequenas descobertas.</p><a href="../lista-de-espera/">Lista de espera</a></div></footer>
+<dialog id="dialog" aria-labelledby="dialog-title">
+  <div class="dialog-head"><h2 id="dialog-title"></h2><form method="dialog"><button class="close" autofocus aria-label="Fechar">×</button></form></div>
+  <div id="dialog-body" class="dialog-body"></div>
+</dialog>
+</body>
+</html>

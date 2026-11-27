@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>@title@</title>
+<meta name="description" content="@description@">
+<link rel="icon" href="@base@assets/simbolo.webp" type="image/webp">
+<link rel="stylesheet" href="@base@estilos.css?v=@revision@">
+@script@
+</head>
+<body>
+<a class="skip button primary" href="#inicio">Ir para o conteúdo</a>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a href="@base@" class="brand"><img src="@base@assets/marca.webp" width="164" height="79" alt="Miudoverso — início"></a>
+    <nav aria-label="Navegação principal">@nav@</nav>
+    <a class="button outlined account" href="@base@meu-miudoverso/"@account@>Meu Miudoverso</a>
+  </div>
+</header>
+<main id="inicio">
+@content@
+</main>
+<footer><div class="wrap footer-inner"><a href="@base@"><img src="@base@assets/marca.webp" width="126" height="61" alt="Miudoverso — início"></a><p>Um universo de pequenas descobertas.</p><a href="@base@lista-de-espera/">Lista de espera</a></div></footer>
+<dialog id="dialog" aria-labelledby="dialog-title">
+  <div class="dialog-head"><h2 id="dialog-title"></h2><form method="dialog"><button class="close" autofocus aria-label="Fechar">×</button></form></div>
+  <div id="dialog-body" class="dialog-body"></div>
+</dialog>
+</body>
+</html>

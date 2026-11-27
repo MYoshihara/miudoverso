@@ -1,0 +1,6 @@
+dist/
+._*
+.DS_Store
+.openai/*.tmp
+*.sqlite
+*.sqlite-*
