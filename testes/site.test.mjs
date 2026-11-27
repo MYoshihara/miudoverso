@@ -48,7 +48,7 @@ test('catálogo: card clicável, favoritos, busca vazia e limpar filtros', async
   assert.ok(pagina.url().endsWith('/materiais/'), 'favoritar não navega');
   await pagina.fill('#search', 'xyzxyz');
   await pagina.click('[data-clear-filters]');
-  assert.equal(await pagina.locator('#resources .resource').count(), 9);
+  assert.equal(await pagina.locator('#resources .resource').count(), 12);
   await pagina.locator('.resource').nth(1).locator('.card-copy p').nth(1).click({ force: true });
   await pagina.waitForURL('**/sequencias-para-contar-historias/');
   await pagina.goto(B + '/materiais/cartas-de-rimas/');
@@ -62,7 +62,7 @@ test('catálogo: card clicável, favoritos, busca vazia e limpar filtros', async
 test('Conecta: curtir, seguir, filtrar, publicar com anexo e excluir', async () => {
   const pagina = await novaPagina(navegador);
   await pagina.goto(B + '/conecta/');
-  assert.equal(await pagina.locator('#feed .post').count(), 10);
+  assert.equal(await pagina.locator('#feed .post').count(), 12);
   await pagina.click('[data-like=p2]');
   assert.equal(await pagina.textContent('[data-like=p2] .like-count'), '42');
   await pagina.locator('.profile').nth(1).locator('[data-follow]').click();
@@ -113,7 +113,7 @@ test('simulador de ganhos e player dos Sons', async () => {
   await pagina.fill('[name=sales]', '10');
   assert.equal((await pagina.textContent('#earnings-range')).replace(/\s/g, ' '), 'R$ 239,20 a R$ 269,10');
   await pagina.goto(B + '/sons/');
-  assert.equal(await pagina.locator('.sound-player').count(), 9);
+  assert.equal(await pagina.locator('.sound-player').count(), 12);
   await pagina.locator('.sound-play').nth(0).click();
   await pagina.waitForTimeout(400);
   assert.equal(await pagina.evaluate(() => document.querySelectorAll('audio')[0].paused), false);

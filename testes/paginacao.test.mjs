@@ -38,7 +38,7 @@ test('listas geradas no build têm páginas numeradas', async () => {
 test('catálogo pagina junto com busca e filtros, com estado no endereço', async () => {
   const pagina = await novaPagina(navegador);
   await pagina.goto(B + '/materiais/');
-  assert.match(await pagina.textContent('#result'), /Mostrando 1–2 de 9/);
+  assert.match(await pagina.textContent('#result'), /Mostrando 1–2 de 15/);
   await pagina.click('#catalog-pages a[data-page="2"]');
   await pagina.click('#catalog-pages a[rel=next]');
   assert.ok(pagina.url().endsWith('/materiais/?pagina=3'));
@@ -49,7 +49,7 @@ test('catálogo pagina junto com busca e filtros, com estado no endereço', asyn
   assert.ok(!pagina.url().includes('pagina='));
   assert.equal(await pagina.getAttribute('[data-filter=fonoaudiologia]', 'aria-pressed'), 'true');
   await pagina.goto(B + '/materiais/?pagina=99');
-  assert.match(await pagina.textContent('#result'), /9 de 9/, 'página inexistente mostra a última');
+  assert.match(await pagina.textContent('#result'), /15 de 15/, 'página inexistente mostra a última');
   assert.deepEqual(pagina.erros, []);
   await pagina.close();
 });
@@ -58,7 +58,7 @@ test('feed carrega mais publicações e respeita o filtro Seguindo', async () =>
   const pagina = await novaPagina(navegador);
   await pagina.goto(B + '/conecta/');
   assert.equal(await pagina.locator('#feed .post:visible').count(), 2);
-  assert.match(await pagina.textContent('#feed-more'), /\(8\)/);
+  assert.match(await pagina.textContent('#feed-more'), /\(10\)/);
   await pagina.click('#feed-more');
   assert.equal(await pagina.locator('#feed .post:visible').count(), 4);
   assert.match(await pagina.textContent('.all-profiles'), /\(6\)/);

@@ -21,6 +21,69 @@ export const biblioteca = [
     description: 'Combine a figura com o som da chuva para trabalhar associações.'
   },
   {
+    title: 'Cachorro',
+    path: 'assets/biblioteca/cachorro.jpg',
+    mime: 'image/jpeg',
+    alt: 'Filhote de cachorro dourado sentado em fundo rosa-claro.',
+    description: 'Um filhote para conversar sobre animais de estimação e imitar o latido.'
+  },
+  {
+    title: 'Passarinho',
+    path: 'assets/biblioteca/passarinho.jpg',
+    mime: 'image/jpeg',
+    alt: 'Canário amarelo pousado em um galho em fundo verde-claro.',
+    description: 'Combine com sons de passarinho para trabalhar a escuta e o vocabulário.'
+  },
+  {
+    title: 'Peixinho',
+    path: 'assets/biblioteca/peixinho.jpg',
+    mime: 'image/jpeg',
+    alt: 'Peixinho dourado nadando em um aquário redondo em fundo amarelo-claro.',
+    description: 'Um bicho que vive na água para comparar com os que vivem na terra.'
+  },
+  {
+    title: 'Banana',
+    path: 'assets/biblioteca/banana.jpg',
+    mime: 'image/jpeg',
+    alt: 'Banana amarela deitada em fundo verde-claro.',
+    description: 'Uma fruta para nomear cores, formas e agrupar alimentos.'
+  },
+  {
+    title: 'Bola',
+    path: 'assets/biblioteca/bola.jpg',
+    mime: 'image/jpeg',
+    alt: 'Bola de praia colorida em fundo lilás.',
+    description: 'Para falar de cores, formas e brincadeiras.'
+  },
+  {
+    title: 'Carrinho',
+    path: 'assets/biblioteca/carrinho.jpg',
+    mime: 'image/jpeg',
+    alt: 'Carrinho de madeira vermelho em fundo verde-claro.',
+    description: 'Um brinquedo para trabalhar vocabulário de transporte e o som do motor.'
+  },
+  {
+    title: 'Sino',
+    path: 'assets/biblioteca/sino.jpg',
+    mime: 'image/jpeg',
+    alt: 'Sino de metal dourado com cabo de madeira em fundo lilás.',
+    description: 'Use junto com o som Sino suave em atividades de associação.'
+  },
+  {
+    title: 'Tambor',
+    path: 'assets/biblioteca/tambor.jpg',
+    mime: 'image/jpeg',
+    alt: 'Tambor infantil vermelho com duas baquetas em fundo amarelo-claro.',
+    description: 'Combine com os sons de batidas para trabalhar ritmo e contagem.'
+  },
+  {
+    title: 'Relógio',
+    path: 'assets/biblioteca/relogio.jpg',
+    mime: 'image/jpeg',
+    alt: 'Despertador azul-esverdeado em fundo rosa-claro.',
+    description: 'Use com o som Tique-taque para falar de tempo e espera.'
+  },
+  {
     title: 'Sino suave',
     path: 'assets/biblioteca/sino-suave.wav',
     mime: 'audio/wav',
@@ -82,6 +145,48 @@ export const biblioteca = [
     mime: 'audio/wav',
     duration: '5 s',
     description: 'Gotas caindo em ritmos diferentes para contar e imaginar uma cena.'
+  },
+  {
+    title: 'Campainha',
+    path: 'assets/biblioteca/campainha.wav',
+    mime: 'audio/wav',
+    duration: '4 s',
+    description: 'Dois toques de campainha para reconhecer e imitar com a voz.'
+  },
+  {
+    title: 'Apito',
+    path: 'assets/biblioteca/apito.wav',
+    mime: 'audio/wav',
+    duration: '4 s',
+    description: 'Dois apitos curtos e um longo para comparar a duração.'
+  },
+  {
+    title: 'Coração',
+    path: 'assets/biblioteca/coracao.wav',
+    mime: 'audio/wav',
+    duration: '5 s',
+    description: 'Batidas de coração para sentir o pulso e acompanhar com as mãos.'
+  },
+  {
+    title: 'Xilofone',
+    path: 'assets/biblioteca/xilofone.wav',
+    mime: 'audio/wav',
+    duration: '4 s',
+    description: 'Notas que descem do agudo ao grave, como uma escada.'
+  },
+  {
+    title: 'Passos',
+    path: 'assets/biblioteca/passos.wav',
+    mime: 'audio/wav',
+    duration: '5 s',
+    description: 'Passos lentos e depois rápidos para perceber a mudança de velocidade.'
+  },
+  {
+    title: 'Boing',
+    path: 'assets/biblioteca/boing.wav',
+    mime: 'audio/wav',
+    duration: '4 s',
+    description: 'Um som de mola para brincadeiras de pular e imitar.'
   }
 ];
 
@@ -251,6 +356,12 @@ export const materials = [
   { id:'pranchas', slug:'pranchas-de-comunicacao', title:'Pranchas de comunicação', authorSlug:'helena-sato', area:'fonoaudiologia', label:'Fonoaudiologia', art:'Sim', color:'honey', type:'Kit para imprimir', price:'R$ 24,90', description:'Pranchas com pedidos, escolhas e sentimentos para crianças que usam comunicação alternativa.' },
   { id:'memoria', slug:'memoria-de-rimas', title:'Memória de rimas', authorSlug:'lia-martins', area:'pedagogia', label:'Pedagogia', art:'Par', color:'mint', type:'Jogo para imprimir', price:'R$ 12,90', description:'Um jogo da memória em que os pares são palavras que rimam.' },
   { id:'escuta', slug:'caderno-de-escuta', title:'Caderno de escuta', authorSlug:'carla-mendes', area:'fonoaudiologia', label:'Fonoaudiologia', art:'Ouvi', color:'violet', type:'E-book', price:'R$ 27,90', description:'Vinte propostas para treinar atenção e memória auditiva em casa e na escola.' },
+  { id:'vocabulario', slug:'cartoes-de-vocabulario', title:'Cartões de vocabulário', authorSlug:'davi-rocha', area:'pedagogia', label:'Pedagogia', art:'Abc', color:'honey', type:'Cartões em PDF', description:'Oito cartões com fotos de frutas, brinquedos e bichos para nomear e agrupar.', download:{ path:'assets/cartoes-de-vocabulario.pdf', filename:'miudoverso-cartoes-de-vocabulario.pdf' } },
+  { id:'ouviu', slug:'o-que-voce-ouviu', title:'O que você ouviu?', authorSlug:'carla-mendes', area:'fonoaudiologia', label:'Fonoaudiologia', art:'Som?', color:'mint', type:'Ficha em PDF', description:'Ficha para marcar os sons ouvidos, feita para usar com o Miudoverso Sons.', download:{ path:'assets/o-que-voce-ouviu.pdf', filename:'miudoverso-o-que-voce-ouviu.pdf' } },
+  { id:'categorias', slug:'jogo-de-categorias', title:'Jogo de categorias', authorSlug:'davi-rocha', area:'pedagogia', label:'Pedagogia', art:'1+1', color:'violet', type:'Jogo para imprimir', price:'R$ 14,90', description:'Cartas para separar o que é de comer, de vestir e de brincar.' },
+  { id:'trava', slug:'trava-linguas-ilustrados', title:'Trava-línguas ilustrados', authorSlug:'carla-mendes', area:'fonoaudiologia', label:'Fonoaudiologia', art:'Tra', color:'honey', type:'Caderno', price:'R$ 16,90', description:'Doze trava-línguas com ilustrações para treinar a fala de forma divertida.' },
+  { id:'rotina-casa', slug:'kit-de-rotina-para-casa', title:'Kit de rotina para casa', authorSlug:'helena-sato', area:'fonoaudiologia', label:'Fonoaudiologia', art:'Casa', color:'violet', type:'Kit para imprimir', price:'R$ 19,90', description:'Pranchas de rotina para famílias usarem na hora de acordar, comer e dormir.' },
+  { id:'narrativas', slug:'narrativas-com-imagens', title:'Narrativas com imagens', authorSlug:'rafa-nunes', area:'pedagogia', label:'Pedagogia', art:'Fim', color:'mint', type:'E-book', price:'R$ 22,90', description:'Sequências de imagens para inventar, escrever e contar histórias em grupo.' },
   { id:'recontar', slug:'historias-para-recontar', title:'Histórias para recontar', authorSlug:'bia-costa', area:'fonoaudiologia', label:'Fonoaudiologia', art:'Era', color:'honey', type:'Caderno', price:'R$ 15,90', description:'Histórias curtas com perguntas de apoio para treinar o reconto oral.' }
 ].map(item => ({ ...item, author: bySlug.get(item.authorSlug).name }));
 
@@ -299,6 +410,14 @@ export const publicacoes = [
     id: 'p10', authorSlug: 'carla-mendes', when: 'há 2 semanas', kind: 'Recurso', likes: 19,
     link: { href: 'sons/', label: 'Ouvir no Miudoverso Sons' },
     text: 'O som Grave e agudo é ótimo para começar a falar de altura dos sons. Peço que a criança suba os braços no agudo e abaixe no grave.'
+  },
+  {
+    id: 'p11', authorSlug: 'davi-rocha', when: 'há 3 semanas', kind: 'Novo material', likes: 26, materialId: 'vocabulario',
+    text: 'Montei cartões de vocabulário com as fotos do Miudoverso Visual. Na sala, a turma separa em três montes: de comer, de brincar e bichos.'
+  },
+  {
+    id: 'p12', authorSlug: 'carla-mendes', when: 'há 3 semanas', kind: 'Novo material', likes: 31, materialId: 'ouviu',
+    text: 'Nova ficha gratuita: a criança ouve um som e marca a figura. Funciona muito bem com o sino, o tambor e o tique-taque.'
   }
 ];
 
