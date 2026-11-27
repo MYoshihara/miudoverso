@@ -1,5 +1,5 @@
 const assetVersion = new URL(import.meta.url).search;
-const [{ demoProfile, materials, materialPath }, { escapeHtml, renderMaterialCard }] = await Promise.all([
+const [{ demoProfile, materials, materialPath, profissionais }, { escapeHtml, renderMaterialCard }] = await Promise.all([
   import('./dados.js' + assetVersion),
   import('./material-card.js' + assetVersion)
 ]);
@@ -11,8 +11,29 @@ const dialogBody = document.querySelector('#dialog-body');
 const favoritesRegion = document.querySelector('#favorites');
 const profileForm = document.querySelector('#my-profile');
 const profileStorageKey = 'miudoverso:demo-profile';
+const feed = document.querySelector('#feed');
+const composer = document.querySelector('#composer');
+const followingRegion = document.querySelector('#following');
+const postsStorageKey = 'miudoverso:posts';
 let saved;
+let likes;
+let following;
 let selectedFilter = 'todos';
+let selectedFeed = 'todos';
+
+function loadSet(key) {
+  try {
+    const values = JSON.parse(localStorage.getItem(key) || '[]');
+    if (Array.isArray(values)) return new Set(values.filter(value => typeof value === 'string'));
+  } catch {}
+  return new Set();
+}
+function storeSet(key, values) {
+  try { localStorage.setItem(key, JSON.stringify([...values])); } catch {}
+}
+function profileLink(slug) {
+  return new URL('conecta/' + slug + '/', import.meta.url).href;
+}
 
 function loadFavorites() {
   try {
@@ -193,6 +214,28 @@ document.addEventListener('click', event => {
   if (button.hasAttribute('data-buy')) document.querySelector('#purchase-feedback').textContent = 'Simulação concluída. Nenhum pagamento foi realizado.';
   if (button.hasAttribute('data-report')) report();
   if (button.hasAttribute('data-clear-filters')) clearFilters();
+  const { like, follow, feed: feedFilter, deletePost } = button.dataset;
+  if (like) {
+    if (likes.has(like)) likes.delete(like);
+    else likes.add(like);
+    storeSet('miudoverso:likes', likes);
+    syncLikes();
+  }
+  if (follow) {
+    if (following.has(follow)) following.delete(follow);
+    else following.add(follow);
+    storeSet('miudoverso:following', following);
+    syncFollowing();
+  }
+  if (feedFilter) {
+    selectedFeed = feedFilter;
+    applyFeedFilter();
+  }
+  if (deletePost) {
+    try { localStorage.setItem(postsStorageKey, JSON.stringify(loadPosts().filter(post => post.id !== deletePost))); } catch {}
+    renderMyPosts();
+    document.querySelector('#composer-text').focus();
+  }
 });
 dialog.addEventListener('submit', event => {
   const form = event.target;
@@ -240,6 +283,81 @@ document.querySelector('#waitlist')?.addEventListener('submit', async event => {
     button.disabled = false;
   }
 });
+function syncLikes() {
+  for (const button of document.querySelectorAll('[data-like]')) {
+    const liked = likes.has(button.dataset.like);
+    button.setAttribute('aria-pressed', String(liked));
+    button.querySelector('.like-count').textContent = String(Number(button.dataset.count) + (liked ? 1 : 0));
+  }
+}
+function syncFollowing() {
+  for (const button of document.querySelectorAll('[data-follow]')) {
+    button.setAttribute('aria-pressed', String(following.has(button.dataset.follow)));
+  }
+  if (followingRegion) {
+    const people = profissionais.filter(person => following.has(person.slug));
+    followingRegion.innerHTML = people.length
+      ? '<ul>' + people.map(person => '<li><a class="text-link" href="' + profileLink(person.slug) + '">' +
+        escapeHtml(person.name) + '</a> · ' + escapeHtml(person.role) + '</li>').join('') + '</ul>'
+      : '<p>Siga profissionais no Conecta para encontrá-los aqui.</p>';
+  }
+  applyFeedFilter();
+}
+function applyFeedFilter() {
+  if (!feed) return;
+  let visible = 0;
+  for (const post of feed.querySelectorAll('.post')) {
+    const show = selectedFeed === 'todos' || post.dataset.author === 'me' || following.has(post.dataset.author);
+    post.hidden = !show;
+    if (show) visible++;
+  }
+  document.querySelector('#feed-empty').hidden = visible > 0;
+  for (const chip of document.querySelectorAll('#feed-filters [data-feed]')) {
+    chip.setAttribute('aria-pressed', String(chip.dataset.feed === selectedFeed));
+  }
+}
+function storedProfile() {
+  try {
+    const profile = JSON.parse(localStorage.getItem(profileStorageKey));
+    if (profile && typeof profile === 'object') return { ...demoProfile, ...profile };
+  } catch {}
+  return demoProfile;
+}
+function loadPosts() {
+  try {
+    const posts = JSON.parse(localStorage.getItem(postsStorageKey) || '[]');
+    if (Array.isArray(posts)) return posts.filter(post => typeof post?.id === 'string' && typeof post.text === 'string');
+  } catch {}
+  return [];
+}
+function timeLabel(iso) {
+  const minutes = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (!(minutes >= 0)) return '';
+  if (minutes < 1) return 'agora';
+  if (minutes < 60) return 'há ' + minutes + ' min';
+  if (minutes < 1440) return 'há ' + Math.floor(minutes / 60) + ' h';
+  return new Date(iso).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
+}
+function renderMyPosts() {
+  if (!composer) return;
+  const profile = storedProfile();
+  const name = profile.displayName || profile.fullName || 'Você';
+  document.querySelector('#composer-avatar').textContent = profileInitials(name);
+  document.querySelector('#my-posts').innerHTML = loadPosts().map(post => `
+    <article class="post own-post" data-author="me">
+      <header class="post-head">
+        <span class="avatar violet" aria-hidden="true">${escapeHtml(profileInitials(name))}</span>
+        <div class="post-byline">
+          <strong class="post-author">${escapeHtml(name)}</strong>
+          <p>${escapeHtml([profile.role, timeLabel(post.createdAt)].filter(Boolean).join(' · '))}</p>
+        </div>
+        <button class="text-link report-link" type="button" data-delete-post="${escapeHtml(post.id)}">Excluir</button>
+      </header>
+      <p class="post-kind">Sua publicação · demonstração</p>
+      <p class="post-text">${escapeHtml(post.text)}</p>
+    </article>`).join('');
+  applyFeedFilter();
+}
 function refreshSavedMaterials() {
   saved = loadFavorites();
   if (grid) {
@@ -250,11 +368,36 @@ function refreshSavedMaterials() {
     }
   }
   renderFavorites();
+  likes = loadSet('miudoverso:likes');
+  following = loadSet('miudoverso:following');
+  syncLikes();
+  syncFollowing();
+  renderMyPosts();
 }
 window.addEventListener('pageshow', event => {
   if (event.persisted) refreshSavedMaterials();
 });
+composer?.addEventListener('submit', event => {
+  event.preventDefault();
+  const field = composer.elements.text;
+  const text = field.value.trim();
+  if (!text) {
+    field.focus();
+    return;
+  }
+  const posts = [{ id: 'u' + Date.now(), text, createdAt: new Date().toISOString() }, ...loadPosts()].slice(0, 20);
+  try {
+    localStorage.setItem(postsStorageKey, JSON.stringify(posts));
+  } catch {
+    composer.querySelector('.form-note').textContent = 'Não foi possível salvar a publicação neste navegador.';
+    return;
+  }
+  composer.reset();
+  selectedFeed = 'todos';
+  renderMyPosts();
+});
+if (composer) composer.hidden = false;
 window.addEventListener('storage', event => {
-  if (event.key === 'miudoverso:saved' || event.key === null) refreshSavedMaterials();
+  if (event.key === null || event.key.startsWith('miudoverso:')) refreshSavedMaterials();
 });
 refreshSavedMaterials();

@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { parseArgs } from 'node:util';
-import { biblioteca, materialPath, materials, profissionais } from './dados.js';
+import { biblioteca, materialPath, materials, profissionais, publicacoes } from './dados.js';
 import { bookmark, escapeHtml, renderMaterialCard } from './material-card.js';
 
 const { values } = parseArgs({ options: { 'static-output': { type: 'string' } } });
@@ -12,24 +12,25 @@ const home = 'Miudoverso — Materiais para pedagogia e fonoaudiologia';
 const profilePath = slug => 'conecta/' + slug + '/';
 const pages = [
   ['/', 'inicio', home, 'Atividades, e-books e recursos de linguagem para pedagogia e fonoaudiologia.', '', true],
-  ['/materiais/', 'materiais', 'Materiais | Miudoverso', 'Atividades para imprimir, recursos de linguagem e e-books.', 'materiais', true],
-  ['/biblioteca/', 'biblioteca', 'Bibliotecas | Miudoverso', 'Imagens e sons gratuitos para atividades de linguagem, vocabulário e escuta.', 'biblioteca', 'biblioteca.js'],
-  ['/conecta/', 'conecta', 'Conecta | Miudoverso', 'Perfis e materiais autorais de profissionais de pedagogia e fonoaudiologia.', 'conecta', true],
-  ['/inspira/', 'inspira', 'Inspira | Miudoverso', 'Leituras para quem aplica, adapta e cria materiais.', 'inspira'],
+  ['/materiais/', 'materiais', 'Miudoverso Materiais', 'Recursos para download: atividades para imprimir, fichas de linguagem e e-books.', 'materiais', true],
+  ['/visual/', 'visual', 'Miudoverso Visual', 'Biblioteca de imagens gratuitas para atividades de linguagem e vocabulário.', 'visual'],
+  ['/sons/', 'sons', 'Miudoverso Sons', 'Recursos sonoros gratuitos para atividades de escuta, ritmo e linguagem.', 'sons', 'biblioteca.js'],
+  ['/inspira/', 'inspira', 'Miudoverso Inspira', 'Blog e conteúdos para quem aplica, adapta e cria materiais.', 'inspira'],
+  ['/conecta/', 'conecta', 'Miudoverso Conecta', 'Feed, perfis, portfólios e lojinhas de profissionais de pedagogia e fonoaudiologia.', 'conecta', true],
   ['/meu-miudoverso/', 'meu-miudoverso', 'Meu Miudoverso', 'Seus materiais salvos e seu perfil profissional.', 'meu-miudoverso', true],
   ['/lista-de-espera/', 'lista-de-espera', 'Lista de espera | Miudoverso', 'Participe da primeira turma do Miudoverso.', '', true],
   ['/inspira/rimas/', 'rimas', 'Como adaptar uma atividade de rimas | Miudoverso Inspira', 'Como variar uma atividade de rimas para diferentes turmas.', 'inspira'],
   ['/inspira/ebook-autoral/', 'ebook-autoral', 'Antes de publicar seu primeiro e-book | Miudoverso Inspira', 'Uma revisão para quem quer publicar atividades, guias ou cadernos digitais.', 'inspira'],
   ...profissionais.map(person => [
-    '/' + profilePath(person.slug), 'perfil-profissional', person.name + ' | Conecta · Miudoverso',
+    '/' + profilePath(person.slug), 'perfil-profissional', person.name + ' | Miudoverso Conecta',
     person.bio, 'conecta', 'perfil-tabs.js', person
   ]),
   ...materials.map(item => [
-    '/' + materialPath(item), 'material', item.title + ' | Materiais · Miudoverso',
+    '/' + materialPath(item), 'material', item.title + ' | Miudoverso Materiais',
     item.description, 'materiais', true, item
   ])
 ];
-const nav = [['materiais','Materiais'], ['biblioteca','Bibliotecas'], ['conecta','Conecta'], ['inspira','Inspira']];
+const nav = [['materiais','Materiais'], ['visual','Visual'], ['sons','Sons'], ['inspira','Inspira'], ['conecta','Conecta']];
 const portfolioImages = new Set(profissionais.flatMap(person =>
   (person.portfolio ?? []).flatMap(project => project.image ? [project.image.path] : [])));
 const assets = [
@@ -57,11 +58,53 @@ const layout = await readFile('index.html', 'utf8');
 const files = Object.create(null);
 const redirects = Object.create(null);
 
+const personBySlug = new Map(profissionais.map(person => [person.slug, person]));
+const heart = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10.1A4.4 4.4 0 0 1 12 7.6a4.4 4.4 0 0 1 7.5 2.3C19.5 15.4 12 20 12 20z" stroke-linejoin="round"/></svg>';
+
+function followButton(person, extra = '') {
+  return `<button class="follow${extra}" type="button" data-follow="${escapeHtml(person.slug)}" aria-pressed="false" aria-label="${escapeHtml('Seguir ' + person.name)}"><span class="follow-off">Seguir</span><span class="follow-on">Seguindo</span></button>`;
+}
+
+function renderPost(post, base, showFollow = true) {
+  const person = personBySlug.get(post.authorSlug);
+  const material = post.materialId && materials.find(item => item.id === post.materialId);
+  let media = '';
+  if (post.image) {
+    media = `<img class="post-image" src="${base + escapeHtml(post.image.path)}" alt="${escapeHtml(post.image.alt)}" width="768" height="512" loading="lazy">`;
+  } else if (material) {
+    media = `
+      <a class="post-attachment" href="${base + escapeHtml(materialPath(material))}">
+        <span class="post-attachment-art ${escapeHtml(material.color)}" aria-hidden="true">${escapeHtml(material.art)}</span>
+        <span><strong>${escapeHtml(material.title)}</strong><small>${escapeHtml(material.type)} · ${escapeHtml(material.price || 'Gratuito')}</small></span>
+      </a>`;
+  } else if (post.link) {
+    media = `<a class="text-link" href="${base + escapeHtml(post.link.href)}">${escapeHtml(post.link.label)}</a>`;
+  }
+  return `
+    <article class="post" data-post="${escapeHtml(post.id)}" data-author="${escapeHtml(person.slug)}">
+      <header class="post-head">
+        <span class="avatar ${escapeHtml(person.color)}" aria-hidden="true">${escapeHtml(person.initials)}</span>
+        <div class="post-byline">
+          <a class="post-author" href="${base + escapeHtml(profilePath(person.slug))}">${escapeHtml(person.name)}</a>
+          <p>${escapeHtml(person.role)} · ${escapeHtml(post.when)}</p>
+        </div>
+        ${showFollow ? followButton(person) : ''}
+      </header>
+      <p class="post-kind">${escapeHtml(post.kind)}</p>
+      <p class="post-text">${escapeHtml(post.text)}</p>
+      ${media}
+      <div class="post-actions">
+        <button class="like" type="button" data-like="${escapeHtml(post.id)}" data-count="${post.likes}" aria-pressed="false">${heart}<span class="visually-hidden">Curtir · </span><span class="like-count">${post.likes}</span><span class="visually-hidden"> curtidas</span></button>
+      </div>
+    </article>`;
+}
+
 function profileCards(base) {
   return profissionais.map(person => `
     <article class="profile">
       <span class="avatar ${escapeHtml(person.color)}" aria-hidden="true">${escapeHtml(person.initials)}</span>
-      <div><h2>${escapeHtml(person.name)}</h2><p class="label">${escapeHtml(person.role)}</p></div>
+      <div><h3>${escapeHtml(person.name)}</h3><p class="label">${escapeHtml(person.role)}</p></div>
+      ${followButton(person)}
       <p class="bio">${escapeHtml(person.bio)}</p>
       <a class="text-link card-link" href="${base + escapeHtml(profilePath(person.slug))}" aria-label="${escapeHtml('Ver perfil de ' + person.name)}">Ver perfil</a>
     </article>`).join('');
@@ -180,6 +223,13 @@ function profileDetails(person, shopItems, base) {
       <div class="grid">${shopItems.map(item => renderMaterialCard(item, base + materialPath(item))).join('')}</div>
     </section>` : '';
 
+  const posts = publicacoes.filter(post => post.authorSlug === person.slug);
+  const postsSection = posts.length ? `
+    <section class="professional-section" aria-labelledby="posts-title">
+      <h2 id="posts-title">Publicações</h2>
+      <div class="feed">${posts.map(post => renderPost(post, base, false)).join('')}</div>
+    </section>` : '';
+
   const facts = profileFacts(person);
   const aboutSections = about + credentials;
   const aboutContent = aboutSections || facts.html ? `
@@ -189,6 +239,7 @@ function profileDetails(person, shopItems, base) {
     </div>` : '';
   const panels = [
     { id: 'sobre', label: 'Sobre', content: aboutContent },
+    { id: 'publicacoes', label: 'Publicações', content: postsSection },
     { id: 'portfolio', label: 'Portfólio', content: portfolio },
     { id: 'lojinha', label: 'Lojinha', content: shop }
   ].filter(panel => panel.content);
@@ -198,7 +249,8 @@ function profileDetails(person, shopItems, base) {
   const [actionTarget, actionLabel] = facts.hasContacts ? ['#contato', 'Ver contato'] : ['#atendimento', 'Ver atendimento'];
 
   return {
-    'main-action': facts.html ? `<a class="button primary" href="${actionTarget}">${actionLabel}</a>` : '',
+    'main-action': '<div class="professional-actions">' + followButton(person, ' button outlined') +
+      (facts.html ? `<a class="button primary" href="${actionTarget}">${actionLabel}</a>` : '') + '</div>',
     'section-links': links ? '<nav class="professional-navigation" aria-label="Seções do perfil"><div class="wrap professional-shortcuts" data-profile-tabs>' + links + '</div></nav>' : '',
     details: sections ? '<div class="wrap professional-content professional-main">' + sections + '</div>' : ''
   };
@@ -274,7 +326,7 @@ for (const [route, fragment, title, description, active, script, data] of pages)
   if (fragment === 'perfil-profissional') {
     const person = data;
     const shopItems = materials.filter(item => item.authorSlug === person.slug);
-    if (shopItems.length) scripts.push('miudoverso.js');
+    scripts.push('miudoverso.js');
     bodyValues = {
       name: escapeHtml(person.name),
       initials: escapeHtml(person.initials),
@@ -284,13 +336,17 @@ for (const [route, fragment, title, description, active, script, data] of pages)
       ...profileDetails(person, shopItems, base)
     };
   }
-  if (fragment === 'conecta') bodyValues.profiles = profileCards(base);
-  if (fragment === 'inicio') bodyValues.featured = materials.map(item => renderMaterialCard(item, base + materialPath(item))).join('');
-  if (fragment === 'material') bodyValues = materialDetails(data, base);
-  if (fragment === 'biblioteca') {
-    bodyValues.images = biblioteca.filter(item => item.mime.startsWith('image/')).map(item => libraryCard(item, base)).join('');
-    bodyValues.sounds = biblioteca.filter(item => item.mime.startsWith('audio/')).map(item => libraryCard(item, base)).join('');
+  if (fragment === 'conecta') {
+    bodyValues.profiles = profileCards(base);
+    bodyValues.posts = publicacoes.map(post => renderPost(post, base)).join('');
   }
+  if (fragment === 'inicio') {
+    bodyValues.featured = materials.map(item => renderMaterialCard(item, base + materialPath(item))).join('');
+    bodyValues['latest-posts'] = publicacoes.slice(0, 2).map(post => renderPost(post, base)).join('');
+  }
+  if (fragment === 'material') bodyValues = materialDetails(data, base);
+  if (fragment === 'visual') bodyValues.images = biblioteca.filter(item => item.mime.startsWith('image/')).map(item => libraryCard(item, base)).join('');
+  if (fragment === 'sons') bodyValues.sounds = biblioteca.filter(item => item.mime.startsWith('audio/')).map(item => libraryCard(item, base)).join('');
   const values = {
     base, title: escapeHtml(title), description: escapeHtml(description), revision:assetRevision,
     script: scripts.map(file => '<script type="module" src="' + base + file + '?v=' + assetRevision + '"></script>').join('\n'),
@@ -322,6 +378,12 @@ for (const [index, [path, type, binary, filename]] of assets.entries()) {
   await emit(join(staticOutput ?? 'publicacao-estatica', path), bytes);
   files['/' + path] = [type, bytes.toString(binary ? 'base64' : 'utf8'), Boolean(binary), filename];
 }
+// O endereço antigo das Bibliotecas leva ao Miudoverso Visual.
+for (const path of ['/biblioteca', '/biblioteca/', '/biblioteca/index.html']) redirects[path] = '/visual/';
+await emit(join(staticOutput ?? 'publicacao-estatica', 'biblioteca/index.html'),
+  '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Miudoverso Visual</title>' +
+  '<meta http-equiv="refresh" content="0; url=../visual/"></head>' +
+  '<body><p><a href="../visual/">As Bibliotecas agora são o Miudoverso Visual e o Miudoverso Sons.</a></p></body></html>');
 for (const filename of ['marca.webp', 'simbolo.webp', 'cartas-de-rimas.pdf']) {
   redirects['/' + filename] = '/assets/' + filename;
 }
