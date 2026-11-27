@@ -5,8 +5,10 @@ import { parseArgs } from 'node:util';
 import { biblioteca, materialPath, materials, profissionais, publicacoes } from './dados.js';
 import { bookmark, escapeHtml, renderMaterialCard } from './material-card.js';
 
-const { values } = parseArgs({ options: { 'static-output': { type: 'string' } } });
+const { values } = parseArgs({ options: { 'static-output': { type: 'string' }, demo: { type: 'boolean' } } });
 const staticOutput = values['static-output'];
+// --demo gera a versão estática sem PHP: a lista de espera simula o envio e não há estatísticas.
+const demo = values.demo === true;
 
 const home = 'Miudoverso — Materiais para pedagogia e fonoaudiologia';
 const profilePath = slug => 'conecta/' + slug + '/';
@@ -36,6 +38,7 @@ const portfolioImages = new Set(profissionais.flatMap(person =>
 const assets = [
   ['estilos.css', 'text/css; charset=utf-8'],
   ['miudoverso.js', 'text/javascript; charset=utf-8'],
+  ['metricas.js', 'text/javascript; charset=utf-8'],
   ['perfil-tabs.js', 'text/javascript; charset=utf-8'],
   ['material-card.js', 'text/javascript; charset=utf-8'],
   ['dados.js', 'text/javascript; charset=utf-8'],
@@ -321,7 +324,7 @@ for (const [route, fragment, title, description, active, script, data] of pages)
   const path = route.slice(1) + 'index.html';
   const body = await readFile('paginas/' + fragment + '.html', 'utf8');
   const current = name => name === active ? ' aria-current="page"' : '';
-  const scripts = script ? [script === true ? 'miudoverso.js' : script] : [];
+  const scripts = ['metricas.js', ...(script ? [script === true ? 'miudoverso.js' : script] : [])];
   let bodyValues = {};
   if (fragment === 'perfil-profissional') {
     const person = data;
@@ -353,12 +356,18 @@ for (const [route, fragment, title, description, active, script, data] of pages)
     nav: nav.map(([slug, label]) => '<a href="' + base + slug + '/"' + current(slug) + '>' + label + '</a>').join(''),
     account: current('meu-miudoverso')
   };
-  function render(demo) {
+  // Na hospedagem PHP os endpoints ficam em api/*.php; no Worker, em /api/*.
+  function render(target) {
+    const demo = target === 'demo';
+    const endpoint = name => demo ? '' : target === 'php' ? base + 'api/' + name + '.php' : '/api/' + name;
     return fill(layout, {
       ...values,
+      route,
+      events: endpoint('evento'),
       content: fill(body, {
         ...bodyValues,
         base,
+        'waitlist-endpoint': endpoint('lista-de-espera'),
         'waitlist-mode': demo ? ' data-demo' : '',
         'waitlist-email': demo ? 'E-mail de teste' : 'Seu e-mail',
         'waitlist-note': demo
@@ -368,8 +377,8 @@ for (const [route, fragment, title, description, active, script, data] of pages)
       })
     });
   }
-  await emit(join(staticOutput ?? 'publicacao-estatica', path), render(true));
-  files[route] = ['text/html; charset=utf-8', render(false), false];
+  await emit(join(staticOutput ?? 'publicacao-estatica', path), render(demo ? 'demo' : 'php'));
+  files[route] = ['text/html; charset=utf-8', render('worker'), false];
   redirects[route + 'index.html'] = route;
   if (route !== '/') redirects[route.slice(0, -1)] = route;
 }
@@ -386,6 +395,11 @@ await emit(join(staticOutput ?? 'publicacao-estatica', 'biblioteca/index.html'),
   '<body><p><a href="../visual/">As Bibliotecas agora são o Miudoverso Visual e o Miudoverso Sons.</a></p></body></html>');
 for (const filename of ['marca.webp', 'simbolo.webp', 'cartas-de-rimas.pdf']) {
   redirects['/' + filename] = '/assets/' + filename;
+}
+if (!demo) {
+  for (const file of ['comum.php', 'lista-de-espera.php', 'evento.php', 'relatorio.php', '.htaccess']) {
+    await emit(join(staticOutput ?? 'publicacao-estatica', 'api', file), await readFile(join('php', file)));
+  }
 }
 if (staticOutput === undefined) {
   const server = await readFile('worker.mjs', 'utf8');

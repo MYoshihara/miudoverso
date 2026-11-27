@@ -1,0 +1,4 @@
+# Arquivos internos: não devem ser acessados pelo navegador.
+<FilesMatch "^(comum|relatorio)\.php$">
+  Require all denied
+</FilesMatch>

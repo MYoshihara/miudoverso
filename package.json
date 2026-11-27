@@ -5,6 +5,8 @@
   "scripts": {
     "build": "node build.mjs",
     "preview": "node preview.mjs",
-    "publicar": "bash publicar.sh"
+    "publicar": "bash publicar.sh",
+    "relatorio": "bash relatorio.sh",
+    "test": "node --test testes/"
   }
 }

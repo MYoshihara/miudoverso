@@ -1,9 +1,17 @@
 <section class="wrap join waitlist-join" id="lista" aria-labelledby="join-title">
     <div><h1 id="join-title">Lista de espera</h1><p>Conte o que você gostaria de fazer no Miudoverso. Vamos usar as respostas para escolher os primeiros recursos do piloto.</p></div>
-    <form id="waitlist" class="form" method="post"@waitlist-mode@>
+    <form id="waitlist" class="form" method="post" data-endpoint="@waitlist-endpoint@"@waitlist-mode@>
       <label>@waitlist-email@<input type="email" name="email" autocomplete="email" maxlength="254" required placeholder="voce@exemplo.com"></label>
       <label>Área de atuação<select name="area" required><option value="">Selecione sua área</option><option value="pedagogia">Pedagogia</option><option value="fonoaudiologia">Fonoaudiologia</option><option value="outra">Outra área</option></select></label>
       <label>O que você quer fazer primeiro?<select name="interesse" required><option value="">Selecione seu interesse</option><option value="baixar">Baixar materiais</option><option value="compartilhar">Compartilhar materiais</option><option value="vender">Vender e-books e atividades</option></select></label>
+      <fieldset class="check-group">
+        <legend>Quais áreas você usaria? <small>Opcional</small></legend>
+        <label class="check"><input type="checkbox" name="areas" value="materiais"><span>Materiais para baixar</span></label>
+        <label class="check"><input type="checkbox" name="areas" value="visual"><span>Imagens do Visual</span></label>
+        <label class="check"><input type="checkbox" name="areas" value="sons"><span>Recursos do Sons</span></label>
+        <label class="check"><input type="checkbox" name="areas" value="conecta"><span>Perfis e feed do Conecta</span></label>
+        <label class="check"><input type="checkbox" name="areas" value="inspira"><span>Artigos do Inspira</span></label>
+      </fieldset>
       <label class="honeypot" aria-hidden="true">Deixe este campo em branco<input name="website" tabindex="-1" autocomplete="off"></label>
       <label class="check"><input type="checkbox" name="consent" required><span>Quero receber o convite e novidades sobre o piloto por e-mail.</span></label>
       <p class="form-note">@waitlist-note@</p>

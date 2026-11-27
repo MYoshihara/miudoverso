@@ -494,3 +494,9 @@ a.post-author:hover { color:var(--purple); text-decoration:underline; text-under
 .sound-seek::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; margin-top:-5px; border:3px solid white; border-radius:50%; background:var(--purple); box-shadow:0 1px 4px #29203d40 }
 .sound-seek::-moz-range-thumb { width:12px; height:12px; border:3px solid white; border-radius:50%; background:var(--purple); box-shadow:0 1px 4px #29203d40 }
 .sound-seek:focus-visible { outline:3px solid #007f78; outline-offset:2px; border-radius:6px }
+
+/* Lista de espera: áreas de interesse */
+.check-group { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr)); gap:6px 14px; margin:2px 0; padding:0; border:0 }
+.check-group legend { margin-bottom:6px; padding:0; font-weight:730 }
+.check-group legend small { margin-left:6px; font-size:.8rem; font-weight:600; opacity:.8 }
+.check-group .check { font-weight:600 }

@@ -21,6 +21,8 @@ let following;
 let selectedFilter = 'todos';
 let selectedFeed = 'todos';
 
+const track = alvo => window.miudoversoMetrica?.(alvo);
+
 function loadSet(key) {
   try {
     const values = JSON.parse(localStorage.getItem(key) || '[]');
@@ -207,23 +209,26 @@ document.addEventListener('click', event => {
   const { save } = button.dataset;
   if (save) {
     if (saved.has(save)) saved.delete(save);
-    else saved.add(save);
+    else { saved.add(save); track('favoritar:' + save); }
     button.setAttribute('aria-pressed', String(saved.has(save)));
     try { localStorage.setItem('miudoverso:saved', JSON.stringify([...saved])); } catch {}
   }
-  if (button.hasAttribute('data-buy')) document.querySelector('#purchase-feedback').textContent = 'Simulação concluída. Nenhum pagamento foi realizado.';
+  if (button.hasAttribute('data-buy')) {
+    document.querySelector('#purchase-feedback').textContent = 'Simulação concluída. Nenhum pagamento foi realizado.';
+    track('compra-simulada:' + location.pathname.split('/').filter(Boolean).pop());
+  }
   if (button.hasAttribute('data-report')) report();
   if (button.hasAttribute('data-clear-filters')) clearFilters();
   const { like, follow, feed: feedFilter, deletePost } = button.dataset;
   if (like) {
     if (likes.has(like)) likes.delete(like);
-    else likes.add(like);
+    else { likes.add(like); track('curtir:' + like); }
     storeSet('miudoverso:likes', likes);
     syncLikes();
   }
   if (follow) {
     if (following.has(follow)) following.delete(follow);
-    else following.add(follow);
+    else { following.add(follow); track('seguir:' + follow); }
     storeSet('miudoverso:following', following);
     syncFollowing();
   }
@@ -250,6 +255,7 @@ dialog.addEventListener('submit', event => {
     }
     form.reset();
     feedback.textContent = 'Envio simulado. No piloto, o material poderia passar por revisão antes de aparecer no catálogo.';
+    track('material:envio-simulado');
   }
   if (form.id === 'report-form') {
     form.reset();
@@ -266,17 +272,24 @@ document.querySelector('#waitlist')?.addEventListener('submit', async event => {
     feedback.textContent = 'Simulação concluída. Nenhum dado foi gravado na lista de espera.';
     return;
   }
-  const data = Object.fromEntries(new FormData(form));
+  const fields = new FormData(form);
+  const data = {
+    email: fields.get('email'), area: fields.get('area'), interesse: fields.get('interesse'),
+    areas: fields.getAll('areas'), website: fields.get('website'), consent: fields.has('consent')
+  };
   button.disabled = true;
   feedback.textContent = 'Enviando sua inscrição…';
   try {
-    const response = await fetch('/api/lista-de-espera', {
+    const response = await fetch(form.dataset.endpoint, {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ ...data, consent:data.consent === 'on' })
+      body:JSON.stringify(data)
     });
     const payload = await response.json();
     feedback.textContent = payload.message;
-    if (response.ok) form.reset();
+    if (response.ok) {
+      form.reset();
+      window.miudoversoMetrica?.('lista-de-espera:inscricao');
+    }
   } catch {
     feedback.textContent = 'Não foi possível confirmar a inscrição. Tente novamente.';
   } finally {
@@ -393,6 +406,7 @@ composer?.addEventListener('submit', event => {
     return;
   }
   composer.reset();
+  track('feed:publicar');
   selectedFeed = 'todos';
   renderMyPosts();
 });

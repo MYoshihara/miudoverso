@@ -20,6 +20,12 @@ ssh=(ssh -o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=yes -o C
 
 "${ssh[@]}" "$host" "test -f '$destination/index.html' && command -v rsync >/dev/null"
 
+# Inscrições e estatísticas ficam fora da pasta pública, em /home/usuario/miudoverso-dados.
+data_dir=$(dirname -- "$(dirname -- "$destination")")/miudoverso-dados
+if [[ -z ${flags[*]-} ]]; then
+  "${ssh[@]}" "$host" "mkdir -p '$data_dir' && chmod 700 '$data_dir'"
+fi
+
 staging=$(mktemp -d "${TMPDIR:-/tmp}/miudoverso-publicacao.XXXXXXXX")
 trap 'rm -rf -- "$staging"' EXIT
 site="$staging/site"
