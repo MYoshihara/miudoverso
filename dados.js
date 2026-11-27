@@ -184,3 +184,13 @@ export const publicacoes = [
     text: 'Usei o som Chuva leve junto com a imagem do guarda-chuva do Miudoverso Visual. A turma inventou uma história inteira a partir dos dois.'
   }
 ];
+
+// Endereço público da prévia: usado nas tags de compartilhamento e na página de erro.
+export const site = { url: 'https://preview.ywd.com.br/miudoverso/' };
+
+// Troque os campos [definir …] antes de divulgar a prévia. O build avisa enquanto eles existirem.
+export const privacidade = {
+  responsavel: '[definir responsável pelos dados]',
+  email: '[definir e-mail de contato]',
+  atualizada: '27 de novembro de 2026'
+};

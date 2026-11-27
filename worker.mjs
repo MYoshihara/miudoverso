@@ -115,7 +115,11 @@ const worker = {
     const redirect = redirects[url.pathname];
     if (redirect) return Response.redirect(new URL(redirect + url.search, url), 308);
     const file = files[url.pathname];
-    if (!file) return new Response('Página não encontrada.', { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+    if (!file) {
+      return new Response(request.method === 'HEAD' ? null : files['/404.html'][1], {
+        status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' }
+      });
+    }
     const [type, content, base64, filename] = file;
     const body = base64 ? Uint8Array.from(atob(content), value => value.charCodeAt(0)) : content;
     const headers = {

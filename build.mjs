@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { parseArgs } from 'node:util';
-import { biblioteca, materialPath, materials, profissionais, publicacoes } from './dados.js';
+import { biblioteca, materialPath, materials, privacidade, profissionais, publicacoes, site } from './dados.js';
 import { bookmark, escapeHtml, renderMaterialCard } from './material-card.js';
 
 const { values } = parseArgs({ options: { 'static-output': { type: 'string' }, demo: { type: 'boolean' } } });
@@ -21,6 +21,8 @@ const pages = [
   ['/conecta/', 'conecta', 'Miudoverso Conecta', 'Feed, perfis, portfólios e lojinhas de profissionais de pedagogia e fonoaudiologia.', 'conecta', true],
   ['/meu-miudoverso/', 'meu-miudoverso', 'Meu Miudoverso', 'Seus materiais salvos e seu perfil profissional.', 'meu-miudoverso', true],
   ['/lista-de-espera/', 'lista-de-espera', 'Lista de espera | Miudoverso', 'Participe da primeira turma do Miudoverso.', '', true],
+  ['/privacidade/', 'privacidade', 'Política de privacidade | Miudoverso', 'Como a prévia do Miudoverso trata os seus dados.'],
+  ['/404/', '404', 'Página não encontrada | Miudoverso', 'Esta página não existe ou mudou de endereço.'],
   ['/inspira/rimas/', 'rimas', 'Como adaptar uma atividade de rimas | Miudoverso Inspira', 'Como variar uma atividade de rimas para diferentes turmas.', 'inspira'],
   ['/inspira/ebook-autoral/', 'ebook-autoral', 'Antes de publicar seu primeiro e-book | Miudoverso Inspira', 'Uma revisão para quem quer publicar atividades, guias ou cadernos digitais.', 'inspira'],
   ...profissionais.map(person => [
@@ -44,6 +46,8 @@ const assets = [
   ['dados.js', 'text/javascript; charset=utf-8'],
   ['biblioteca.js', 'text/javascript; charset=utf-8'],
   ['assets/marca.webp', 'image/webp', true],
+  ['assets/compartilhar.jpg', 'image/jpeg', true],
+  ['assets/fontes/figtree.woff2', 'font/woff2', true],
   ['assets/simbolo.webp', 'image/webp', true],
   ...Array.from(portfolioImages, path => [path, 'image/jpeg', true]),
   ...biblioteca.map(({ path, mime }) => [path, mime, true]),
@@ -59,6 +63,13 @@ for (const [index, [path]] of assets.entries()) {
 const assetRevision = assetHash.digest('hex').slice(0, 12);
 const layout = await readFile('index.html', 'utf8');
 const files = Object.create(null);
+const sitePath = new URL(site.url).pathname;
+const pending = value => value.startsWith('[definir');
+const privacyValue = value => pending(value) ? '<mark class="to-define">' + escapeHtml(value) + '</mark>' : escapeHtml(value);
+for (const [field, value] of Object.entries(privacidade)) {
+  if (pending(value)) console.warn('Atenção: preencha privacidade.' + field + ' em dados.js antes de divulgar a prévia.');
+}
+let notFound;
 const redirects = Object.create(null);
 
 const personBySlug = new Map(profissionais.map(person => [person.slug, person]));
@@ -339,6 +350,14 @@ for (const [route, fragment, title, description, active, script, data] of pages)
       ...profileDetails(person, shopItems, base)
     };
   }
+  if (fragment === 'privacidade') {
+    bodyValues = {
+      controller: privacyValue(privacidade.responsavel),
+      email: pending(privacidade.email) ? privacyValue(privacidade.email)
+        : '<a href="mailto:' + escapeHtml(privacidade.email) + '">' + escapeHtml(privacidade.email) + '</a>',
+      updated: escapeHtml(privacidade.atualizada)
+    };
+  }
   if (fragment === 'conecta') {
     bodyValues.profiles = profileCards(base);
     bodyValues.posts = publicacoes.map(post => renderPost(post, base)).join('');
@@ -363,6 +382,8 @@ for (const [route, fragment, title, description, active, script, data] of pages)
     return fill(layout, {
       ...values,
       route,
+      'page-url': escapeHtml(site.url + route.slice(1)),
+      'share-image': escapeHtml(site.url + 'assets/compartilhar.jpg'),
       events: endpoint('evento'),
       content: fill(body, {
         ...bodyValues,
@@ -376,6 +397,12 @@ for (const [route, fragment, title, description, active, script, data] of pages)
         'waitlist-button': demo ? 'Simular inscrição' : 'Quero participar'
       })
     });
+  }
+  // A página de erro é servida em qualquer endereço, então usa caminhos absolutos.
+  if (route === '/404/') {
+    const absolute = (html, root) => html.replaceAll('="../', '="' + root);
+    notFound = { static: absolute(render(demo ? 'demo' : 'php'), sitePath), worker: absolute(render('worker'), '/') };
+    continue;
   }
   await emit(join(staticOutput ?? 'publicacao-estatica', path), render(demo ? 'demo' : 'php'));
   files[route] = ['text/html; charset=utf-8', render('worker'), false];
@@ -396,7 +423,10 @@ await emit(join(staticOutput ?? 'publicacao-estatica', 'biblioteca/index.html'),
 for (const filename of ['marca.webp', 'simbolo.webp', 'cartas-de-rimas.pdf']) {
   redirects['/' + filename] = '/assets/' + filename;
 }
+await emit(join(staticOutput ?? 'publicacao-estatica', '404.html'), notFound.static);
+files['/404.html'] = ['text/html; charset=utf-8', notFound.worker, false];
 if (!demo) {
+  await emit(join(staticOutput ?? 'publicacao-estatica', '.htaccess'), 'ErrorDocument 404 ' + sitePath + '404.html\n');
   for (const file of ['comum.php', 'lista-de-espera.php', 'evento.php', 'relatorio.php', '.htaccess']) {
     await emit(join(staticOutput ?? 'publicacao-estatica', 'api', file), await readFile(join('php', file)));
   }
