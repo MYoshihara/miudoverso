@@ -1,5 +1,5 @@
 const assetVersion = new URL(import.meta.url).search;
-const [{ biblioteca, demoProfile, materials, materialPath, profissionais }, { escapeHtml, renderMaterialCard }] = await Promise.all([
+const [{ biblioteca, demoProfile, materials, materialPath, profissionais }, { escapeHtml, renderMaterialCard, renderPagination }] = await Promise.all([
   import('./dados.js' + assetVersion),
   import('./material-card.js' + assetVersion)
 ]);
@@ -20,6 +20,10 @@ let likes;
 let following;
 let selectedFilter = 'todos';
 let selectedFeed = 'todos';
+let catalogPage = 1;
+const catalogSize = Number(grid?.dataset.perPage) || 12;
+const feedSize = Number(feed?.dataset.perPage) || 10;
+let feedLimit = feedSize;
 
 const track = alvo => window.miudoversoMetrica?.(alvo);
 
@@ -50,15 +54,41 @@ function comparable(value) {
 function materialLink(item) {
   return new URL(materialPath(item), import.meta.url).href;
 }
+// Busca, filtro e página ficam no endereço (?busca=&filtro=&pagina=) para o voltar e o compartilhar funcionarem.
+function catalogUrl(page = catalogPage) {
+  const params = new URLSearchParams();
+  if (query.value.trim()) params.set('busca', query.value.trim());
+  if (selectedFilter !== 'todos') params.set('filtro', selectedFilter);
+  if (page > 1) params.set('pagina', String(page));
+  const search = params.toString();
+  return location.pathname + (search ? '?' + search : '');
+}
+function readCatalogUrl() {
+  const params = new URLSearchParams(location.search);
+  query.value = params.get('busca') ?? '';
+  const filter = params.get('filtro');
+  selectedFilter = document.querySelector(`#filters [data-filter="${CSS.escape(filter ?? '')}"]`) ? filter : 'todos';
+  catalogPage = Math.max(1, Number.parseInt(params.get('pagina'), 10) || 1);
+  for (const chip of document.querySelectorAll('#filters [data-filter]')) {
+    chip.setAttribute('aria-pressed', String(chip.dataset.filter === selectedFilter));
+  }
+}
 function renderCatalog() {
   const term = comparable(query.value);
-  const shown = materials.filter(item => {
+  const matches = materials.filter(item => {
     const matchesTerm = comparable(item.title + ' ' + item.author + ' ' + item.label + ' ' + item.description + ' ' + item.type).includes(term);
     const matchesFilter = selectedFilter === 'todos' || selectedFilter === item.area || (selectedFilter === 'gratuitos' && !item.price);
     return matchesTerm && matchesFilter;
   });
-  const count = shown.length;
-  document.querySelector('#result').textContent = count === 0 ? 'Nenhum material encontrado.' : count + (count === 1 ? ' material encontrado' : ' materiais encontrados');
+  const count = matches.length;
+  const pages = Math.max(1, Math.ceil(count / catalogSize));
+  catalogPage = Math.min(catalogPage, pages);
+  const first = (catalogPage - 1) * catalogSize;
+  const shown = matches.slice(first, first + catalogSize);
+  document.querySelector('#result').textContent = count === 0 ? 'Nenhum material encontrado.'
+    : pages > 1 ? `Mostrando ${first + 1}–${first + shown.length} de ${count} materiais`
+    : count + (count === 1 ? ' material encontrado' : ' materiais encontrados');
+  document.querySelector('#catalog-pages').innerHTML = renderPagination(catalogPage, pages, catalogUrl, 'Páginas do catálogo');
   grid.innerHTML = count === 0
     ? '<div class="empty-state"><p>Tente outra palavra ou remova os filtros para ver todos os materiais.</p>' +
       '<button class="button outlined" type="button" data-clear-filters>Limpar busca e filtros</button></div>'
@@ -68,9 +98,11 @@ function renderCatalog() {
 function clearFilters() {
   query.value = '';
   selectedFilter = 'todos';
+  catalogPage = 1;
   for (const chip of document.querySelectorAll('#filters [data-filter]')) {
     chip.setAttribute('aria-pressed', String(chip.dataset.filter === 'todos'));
   }
+  history.replaceState(null, '', catalogUrl());
   renderCatalog();
   query.focus();
 }
@@ -199,12 +231,33 @@ if (profileForm) {
 }
 
 if (grid) {
-  query.addEventListener('input', renderCatalog);
+  readCatalogUrl();
+  query.addEventListener('input', () => {
+    catalogPage = 1;
+    history.replaceState(null, '', catalogUrl());
+    renderCatalog();
+  });
   document.querySelector('#filters').addEventListener('click', event => {
     const button = event.target.closest('[data-filter]');
     if (!button) return;
     selectedFilter = button.dataset.filter;
+    catalogPage = 1;
     for (const chip of event.currentTarget.querySelectorAll('[data-filter]')) chip.setAttribute('aria-pressed', String(chip === button));
+    history.replaceState(null, '', catalogUrl());
+    renderCatalog();
+  });
+  document.querySelector('#catalog-pages').addEventListener('click', event => {
+    const link = event.target.closest('a[data-page]');
+    if (!link || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    event.preventDefault();
+    catalogPage = Number(link.dataset.page);
+    history.pushState(null, '', catalogUrl());
+    renderCatalog();
+    document.querySelector('#materiais').scrollIntoView({ block: 'start' });
+    document.querySelector('#result').focus({ preventScroll: true });
+  });
+  window.addEventListener('popstate', () => {
+    readCatalogUrl();
     renderCatalog();
   });
 }
@@ -241,7 +294,16 @@ document.addEventListener('click', event => {
   }
   if (feedFilter) {
     selectedFeed = feedFilter;
+    feedLimit = feedSize;
     applyFeedFilter();
+  }
+  if (button.id === 'feed-more') {
+    const firstNew = feedLimit;
+    feedLimit += feedSize;
+    applyFeedFilter();
+    const posts = [...feed.querySelectorAll('.post:not([data-author="me"]):not([hidden])')];
+    posts[firstNew]?.querySelector('a, button')?.focus();
+    track('feed:carregar-mais');
   }
   if (deletePost) {
     try { localStorage.setItem(postsStorageKey, JSON.stringify(loadPosts().filter(post => post.id !== deletePost))); } catch {}
@@ -326,11 +388,19 @@ function syncFollowing() {
 function applyFeedFilter() {
   if (!feed) return;
   let visible = 0;
+  let matching = 0;
   for (const post of feed.querySelectorAll('.post')) {
-    const show = selectedFeed === 'todos' || post.dataset.author === 'me' || following.has(post.dataset.author);
+    const own = post.dataset.author === 'me';
+    const matches = own || selectedFeed === 'todos' || following.has(post.dataset.author);
+    if (matches && !own) matching++;
+    const show = matches && (own || matching <= feedLimit);
     post.hidden = !show;
     if (show) visible++;
   }
+  const remaining = Math.max(0, matching - feedLimit);
+  const more = document.querySelector('#feed-more');
+  more.hidden = remaining === 0;
+  more.textContent = 'Carregar mais publicações (' + remaining + ')';
   document.querySelector('#feed-empty').hidden = visible > 0;
   for (const chip of document.querySelectorAll('#feed-filters [data-feed]')) {
     chip.setAttribute('aria-pressed', String(chip.dataset.feed === selectedFeed));

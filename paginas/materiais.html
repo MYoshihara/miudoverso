@@ -9,6 +9,7 @@
         <button class="chip" data-filter="todos" aria-pressed="true" type="button">Todos</button><button class="chip" data-filter="pedagogia" aria-pressed="false" type="button">Pedagogia</button><button class="chip" data-filter="fonoaudiologia" aria-pressed="false" type="button">Fonoaudiologia</button><button class="chip" data-filter="gratuitos" aria-pressed="false" type="button">Gratuitos</button>
       </div>
     </div>
-    <p class="result" id="result" role="status"></p>
-    <div class="grid" id="resources"></div>
+    <p class="result" id="result" role="status" tabindex="-1"></p>
+    <div class="grid" id="resources" data-per-page="@per-page@"></div>
+    <div id="catalog-pages"></div>
   </section>

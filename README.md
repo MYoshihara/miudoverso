@@ -38,6 +38,16 @@ Quase todo o conteúdo fica em `dados.js`: materiais, profissionais, publicaçõ
 
 Depois de editar, rode `npm run build` de novo.
 
+### Paginação
+
+Cada lista mostra um número fixo de itens por página, definido em `paginacao`, no fim de `dados.js`:
+
+- **Visual, Sons, Inspira e o diretório de profissionais** (`/conecta/profissionais/`) têm páginas com endereço próprio, como `/visual/pagina/2/`, geradas no build.
+- **Catálogo de Materiais:** a paginação acontece junto com a busca e os filtros, e o estado fica no endereço (`?busca=&filtro=&pagina=`).
+- **Feed do Conecta:** mostra um bloco de publicações por vez, com o botão "Carregar mais publicações".
+
+Para ver a paginação funcionando com pouco conteúdo, gere o site com `MIUDOVERSO_POR_PAGINA=2 npm run build`.
+
 ## Publicar na Hostinger
 
 ```sh

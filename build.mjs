@@ -2,8 +2,8 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { parseArgs } from 'node:util';
-import { biblioteca, materialPath, materials, privacidade, profissionais, publicacoes, site } from './dados.js';
-import { bookmark, escapeHtml, renderMaterialCard } from './material-card.js';
+import { artigos, biblioteca, materialPath, materials, paginacao, privacidade, profissionais, publicacoes, site } from './dados.js';
+import { bookmark, escapeHtml, renderMaterialCard, renderPagination } from './material-card.js';
 
 const { values } = parseArgs({ options: { 'static-output': { type: 'string' }, demo: { type: 'boolean' } } });
 const staticOutput = values['static-output'];
@@ -11,13 +11,28 @@ const staticOutput = values['static-output'];
 const demo = values.demo === true;
 
 const home = 'Miudoverso — Materiais para pedagogia e fonoaudiologia';
+
+// Listas longas viram páginas numeradas: /visual/, /visual/pagina/2/, /visual/pagina/3/...
+const perPage = key => Number(process.env.MIUDOVERSO_POR_PAGINA) || paginacao[key];
+const pageRoute = (route, page) => page === 1 ? route : route + 'pagina/' + page + '/';
+function paged(route, key, items, fragment, title, description, active, script) {
+  const size = perPage(key);
+  const total = Math.max(1, Math.ceil(items.length / size));
+  return Array.from({ length: total }, (_, index) => [
+    pageRoute(route, index + 1), fragment, index ? title + ' · página ' + (index + 1) : title, description, active, script,
+    { route, page: index + 1, total, items: items.slice(index * size, (index + 1) * size) }
+  ]);
+}
+const images = biblioteca.filter(item => item.mime.startsWith('image/'));
+const sounds = biblioteca.filter(item => item.mime.startsWith('audio/'));
 const profilePath = slug => 'conecta/' + slug + '/';
 const pages = [
   ['/', 'inicio', home, 'Atividades, e-books e recursos de linguagem para pedagogia e fonoaudiologia.', '', true],
   ['/materiais/', 'materiais', 'Miudoverso Materiais', 'Recursos para download: atividades para imprimir, fichas de linguagem e e-books.', 'materiais', true],
-  ['/visual/', 'visual', 'Miudoverso Visual', 'Biblioteca de imagens gratuitas para atividades de linguagem e vocabulário.', 'visual'],
-  ['/sons/', 'sons', 'Miudoverso Sons', 'Recursos sonoros gratuitos para atividades de escuta, ritmo e linguagem.', 'sons', 'biblioteca.js'],
-  ['/inspira/', 'inspira', 'Miudoverso Inspira', 'Blog e conteúdos para quem aplica, adapta e cria materiais.', 'inspira'],
+  ...paged('/visual/', 'visual', images, 'visual', 'Miudoverso Visual', 'Biblioteca de imagens gratuitas para atividades de linguagem e vocabulário.', 'visual'),
+  ...paged('/sons/', 'sons', sounds, 'sons', 'Miudoverso Sons', 'Recursos sonoros gratuitos para atividades de escuta, ritmo e linguagem.', 'sons', 'biblioteca.js'),
+  ...paged('/inspira/', 'inspira', artigos, 'inspira', 'Miudoverso Inspira', 'Blog e conteúdos para quem aplica, adapta e cria materiais.', 'inspira'),
+  ...paged('/conecta/profissionais/', 'profissionais', profissionais, 'profissionais', 'Profissionais | Miudoverso Conecta', 'Conheça profissionais de pedagogia e fonoaudiologia que criam materiais.', 'conecta', true),
   ['/conecta/', 'conecta', 'Miudoverso Conecta', 'Feed, perfis, portfólios e lojinhas de profissionais de pedagogia e fonoaudiologia.', 'conecta', true],
   ['/meu-miudoverso/', 'meu-miudoverso', 'Meu Miudoverso', 'Seus materiais salvos e seu perfil profissional.', 'meu-miudoverso', true],
   ['/lista-de-espera/', 'lista-de-espera', 'Lista de espera | Miudoverso', 'Participe da primeira turma do Miudoverso.', '', true],
@@ -25,11 +40,7 @@ const pages = [
   ['/criar-perfil/', 'criar-perfil', 'Criar meu perfil | Miudoverso', 'Crie seu perfil profissional no Miudoverso Conecta.', 'meu-miudoverso', 'cadastro.js'],
   ['/privacidade/', 'privacidade', 'Política de privacidade | Miudoverso', 'Como a prévia do Miudoverso trata os seus dados.'],
   ['/404/', '404', 'Página não encontrada | Miudoverso', 'Esta página não existe ou mudou de endereço.'],
-  ['/inspira/rimas/', 'rimas', 'Como adaptar uma atividade de rimas | Miudoverso Inspira', 'Como variar uma atividade de rimas para diferentes turmas.', 'inspira'],
-  ['/inspira/jogos-de-escuta/', 'jogos-de-escuta', 'Quatro jogos de escuta com sons do dia a dia | Miudoverso Inspira', 'Propostas rápidas para treinar atenção auditiva em casa, na escola ou no consultório.', 'inspira'],
-  ['/inspira/imagens-e-vocabulario/', 'imagens-e-vocabulario', 'Como usar uma imagem para ampliar o vocabulário | Miudoverso Inspira', 'Três perguntas para tirar mais de cada figura.', 'inspira'],
-  ['/inspira/precificar-material/', 'precificar-material', 'Quanto cobrar pelo seu primeiro material | Miudoverso Inspira', 'Um roteiro simples para definir o preço sem desvalorizar o seu trabalho.', 'inspira'],
-  ['/inspira/ebook-autoral/', 'ebook-autoral', 'Antes de publicar seu primeiro e-book | Miudoverso Inspira', 'Uma revisão para quem quer publicar atividades, guias ou cadernos digitais.', 'inspira'],
+  ...artigos.map(article => ['/inspira/' + article.slug + '/', article.slug, article.title + ' | Miudoverso Inspira', article.summary, 'inspira']),
   ...profissionais.map(person => [
     '/' + profilePath(person.slug), 'perfil-profissional', person.name + ' | Miudoverso Conecta',
     person.bio, 'conecta', 'perfil-tabs.js', person
@@ -120,8 +131,8 @@ function renderPost(post, base, showFollow = true) {
     </article>`;
 }
 
-function profileCards(base) {
-  return profissionais.map(person => `
+function profileCards(people, base) {
+  return people.map(person => `
     <article class="profile">
       <span class="avatar ${escapeHtml(person.color)}" aria-hidden="true">${escapeHtml(person.initials)}</span>
       <div><h3>${escapeHtml(person.name)}</h3><p class="label">${escapeHtml(person.role)}</p></div>
@@ -366,8 +377,20 @@ for (const [route, fragment, title, description, active, script, data] of pages)
       updated: escapeHtml(privacidade.atualizada)
     };
   }
+  if (data?.page) {
+    bodyValues.pagination = renderPagination(data.page, data.total, page => base + pageRoute(data.route, page).slice(1));
+  }
+  if (fragment === 'profissionais') bodyValues.profiles = profileCards(data.items, base);
+  if (fragment === 'inspira') {
+    bodyValues.articles = data.items.map(article => `
+      <article><p class="label">${escapeHtml(article.label)}</p><h3>${escapeHtml(article.title)}</h3><p>${escapeHtml(article.summary)}</p><a href="${base}inspira/${escapeHtml(article.slug)}/" class="text-link card-link">${escapeHtml(article.link)}</a></article>`).join('');
+  }
+  if (fragment === 'materiais') bodyValues['per-page'] = String(perPage('materiais'));
   if (fragment === 'conecta') {
-    bodyValues.profiles = profileCards(base);
+    const shown = 4;
+    bodyValues.profiles = profileCards(profissionais.slice(0, shown), base);
+    bodyValues['all-profiles'] = `<a class="text-link" href="${base}conecta/profissionais/">Ver todos os profissionais (${profissionais.length})</a>`;
+    bodyValues['feed-per-page'] = String(perPage('feed'));
     bodyValues.posts = publicacoes.map(post => renderPost(post, base)).join('');
     const option = (value, label) => '<option value="' + escapeHtml(value) + '">' + escapeHtml(label) + '</option>';
     bodyValues['attach-options'] = option('', 'Nada') +
@@ -381,8 +404,8 @@ for (const [route, fragment, title, description, active, script, data] of pages)
     bodyValues['latest-posts'] = publicacoes.slice(0, 2).map(post => renderPost(post, base)).join('');
   }
   if (fragment === 'material') bodyValues = materialDetails(data, base);
-  if (fragment === 'visual') bodyValues.images = biblioteca.filter(item => item.mime.startsWith('image/')).map(item => libraryCard(item, base)).join('');
-  if (fragment === 'sons') bodyValues.sounds = biblioteca.filter(item => item.mime.startsWith('audio/')).map(item => libraryCard(item, base)).join('');
+  if (fragment === 'visual') bodyValues.images = data.items.map(item => libraryCard(item, base)).join('');
+  if (fragment === 'sons') bodyValues.sounds = data.items.map(item => libraryCard(item, base)).join('');
   const values = {
     base, title: escapeHtml(title), description: escapeHtml(description), revision:assetRevision,
     script: scripts.map(file => '<script type="module" src="' + base + file + '?v=' + assetRevision + '"></script>').join('\n'),
@@ -421,6 +444,10 @@ for (const [route, fragment, title, description, active, script, data] of pages)
   await emit(join(staticOutput ?? 'publicacao-estatica', path), render(demo ? 'demo' : 'php'));
   files[route] = ['text/html; charset=utf-8', render('worker'), false];
   redirects[route + 'index.html'] = route;
+  if (data?.page === 1) {
+    redirects[route + 'pagina/1/'] = route;
+    redirects[route + 'pagina/'] = route;
+  }
   if (route !== '/') redirects[route.slice(0, -1)] = route;
 }
 for (const [index, [path, type, binary, filename]] of assets.entries()) {

@@ -311,3 +311,16 @@ export const privacidade = {
   email: '[definir e-mail de contato]',
   atualizada: '27 de novembro de 2026'
 };
+
+// Artigos do Miudoverso Inspira. O texto de cada um fica em paginas/<slug>.html.
+export const artigos = [
+  { slug: 'rimas', label: 'Pedagogia', title: 'Como adaptar uma atividade de rimas para diferentes turmas', summary: 'Três caminhos para trabalhar a mesma proposta com níveis diferentes de autonomia.', link: 'Ler sobre atividades de rimas' },
+  { slug: 'jogos-de-escuta', label: 'Fonoaudiologia', title: 'Quatro jogos de escuta com sons do dia a dia', summary: 'Propostas rápidas para treinar atenção auditiva em casa, na escola ou no consultório.', link: 'Ler sobre jogos de escuta' },
+  { slug: 'imagens-e-vocabulario', label: 'Pedagogia', title: 'Como usar uma imagem para ampliar o vocabulário', summary: 'Três perguntas para tirar mais de cada figura.', link: 'Ler sobre imagens e vocabulário' },
+  { slug: 'ebook-autoral', label: 'Criação de materiais', title: 'O que preparar antes de publicar seu primeiro e-book', summary: 'Cuidados com a descrição, a amostra e os direitos de uso dos recursos.', link: 'Ler sobre publicação de e-books' },
+  { slug: 'precificar-material', label: 'Criação de materiais', title: 'Quanto cobrar pelo seu primeiro material', summary: 'Um roteiro simples para definir o preço sem desvalorizar o seu trabalho.', link: 'Ler sobre preço de materiais' }
+];
+
+// Quantos itens cada lista mostra por página. Para testar a paginação com pouco
+// conteúdo, gere o site com MIUDOVERSO_POR_PAGINA=2 npm run build.
+export const paginacao = { materiais: 12, visual: 12, sons: 12, inspira: 9, profissionais: 12, feed: 10 };

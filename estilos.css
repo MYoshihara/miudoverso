@@ -593,3 +593,27 @@ a.post-author:hover { color:var(--purple); text-decoration:underline; text-under
 }
 .composer,.composer-attach { min-width:0 }
 .composer-attach select { min-width:0; width:100% }
+
+/* Paginação */
+.pagination { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:8px 12px; margin-top:28px }
+.pagination ol { display:flex; flex-wrap:wrap; gap:6px; margin:0; padding:0; list-style:none }
+.pagination ol a,.pagination-gap { display:grid; place-items:center; min-width:44px; height:44px; padding:0 8px; border-radius:12px; font-weight:780; text-decoration:none }
+.pagination ol a { border:1px solid var(--line); background:white; color:var(--ink) }
+.pagination ol a:hover { border-color:#d6c3ea; background:#faf5ff; color:var(--purple) }
+.pagination ol a[aria-current=page] { border-color:var(--purple); background:var(--purple); color:white }
+.pagination-gap { min-width:24px; color:var(--sub) }
+.pagination-step { display:inline-flex; align-items:center; min-height:44px; padding:0 14px; border:1px solid #dccaed; border-radius:12px; background:white; color:var(--purple); font-weight:780; text-decoration:none }
+a.pagination-step:hover { background:#f5ebff }
+span.pagination-step { border-color:var(--line); color:#b3a9bd; background:transparent }
+.pagination-status { flex-basis:100%; text-align:center; font-size:.875rem }
+.feed-more { justify-self:center }
+.all-profiles { margin-top:-2px }
+.profile-directory .profile { padding:20px }
+@media (max-width:650px) {
+  .pagination { gap:8px }
+  .pagination ol { order:-1; flex-basis:100%; justify-content:center }
+  .pagination-step { padding:0 12px }
+}
+@media (max-width:850px) {
+  .conecta-aside > .all-profiles { order:-1 }
+}

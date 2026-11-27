@@ -24,7 +24,7 @@
               <button class="chip" data-feed="todos" aria-pressed="true" type="button">Todos</button><button class="chip" data-feed="seguindo" aria-pressed="false" type="button">Seguindo</button>
             </div>
           </div>
-          <div class="feed" id="feed" aria-labelledby="feed-title">
+          <div class="feed" id="feed" aria-labelledby="feed-title" data-per-page="@feed-per-page@">
             <div class="feed" id="my-posts"></div>
             @posts@
             <div class="empty-state" id="feed-empty" hidden>
@@ -32,11 +32,13 @@
               <button class="button outlined" type="button" data-feed="todos">Ver todas as publicações</button>
             </div>
           </div>
+          <button class="button outlined feed-more" id="feed-more" type="button" hidden>Carregar mais publicações</button>
         </div>
         <aside class="conecta-aside" aria-labelledby="profiles-title">
           <div class="my-profile-card" id="my-profile-card" hidden></div>
           <h2 id="profiles-title">Profissionais</h2>
           <div class="profile-list" id="profiles">@profiles@</div>
+          <p class="all-profiles">@all-profiles@</p>
           <div class="creator"><div><h2>Você cria materiais autorais?</h2><p>Venda atividades e e-books na sua lojinha. Veja a comissão e simule seus ganhos.</p></div><div class="actions"><a class="button primary" href="@base@criadores/">Saiba como vender</a><button class="button outlined" id="publish" type="button">Simular publicação</button></div></div>
         </aside>
       </div>
