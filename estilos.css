@@ -25,9 +25,9 @@ button:disabled { cursor:wait; opacity:.7 }
 .wrap { width:min(1192px,calc(100% - 72px)); margin-inline:auto }
 section[id] { scroll-margin-top:106px }
 .site-header { position:sticky; top:0; z-index:5; background:var(--page); border-bottom:1px solid var(--line) }
-.header-inner { display:flex; justify-content:space-between; align-items:center; gap:22px; min-height:79px }
+.header-inner { display:flex; justify-content:space-between; align-items:center; gap:22px; min-height:80px; padding-block:10px }
 .brand { display:inline-flex; align-items:center; padding:3px 0 }
-.brand img { width:143px; height:auto; flex:none }
+.brand img { width:118px; height:auto; flex:none }
 nav { display:flex; flex-wrap:wrap; gap:clamp(16px,3vw,39px) }
 nav a { padding:9px 0; text-decoration:none; font-weight:700 }
 nav a:hover,.text-link:hover,footer a:hover { color:var(--teal) }
@@ -241,7 +241,7 @@ dialog::backdrop { background:#2b173994 }
 @media (max-width:650px) {
   .wrap { width:calc(100% - 28px) }
   .header-inner { flex-wrap:wrap; min-height:72px; gap:3px 8px; padding-block:5px }
-  .brand img { width:108px }
+  .brand img { width:92px }
   .account { font-size:.84rem; min-height:40px; padding-inline:10px }
   nav { order:3; flex-basis:100%; gap:4px clamp(12px,4vw,22px) }
   nav a { padding:6px 0 }
@@ -478,3 +478,19 @@ a.post-author:hover { color:var(--purple); text-decoration:underline; text-under
   .areas .area-wide { grid-column:auto }
   .profile-list { margin-inline:-14px; padding-inline:14px }
 }
+
+/* Player do Miudoverso Sons */
+.sound-player { display:flex; align-items:center; gap:12px; min-width:0; padding:8px 14px 8px 8px; border:1px solid #e2d4f1; border-radius:100px; background:var(--lilac) }
+.sound-play { display:grid; place-items:center; flex:none; width:44px; height:44px; padding:0; border:0; border-radius:50%; background:var(--purple); color:white; box-shadow:0 4px 10px #623b9233; transition:background .15s, transform .15s }
+.sound-play:hover { background:var(--dark) }
+.sound-play:active { transform:scale(.94) }
+.sound-play svg { margin-left:2px }
+.is-playing .sound-play svg { margin-left:0 }
+.sound-time { flex:none; color:var(--dark); font-size:.85rem; font-weight:750; font-variant-numeric:tabular-nums }
+.sound-seek { --progress:0%; flex:1; min-width:0; height:24px; margin:0; background:none; cursor:pointer; -webkit-appearance:none; appearance:none }
+.sound-seek::-webkit-slider-runnable-track { height:6px; border-radius:6px; background:linear-gradient(to right,var(--purple) var(--progress),#d8c6ec var(--progress)) }
+.sound-seek::-moz-range-track { height:6px; border-radius:6px; background:#d8c6ec }
+.sound-seek::-moz-range-progress { height:6px; border-radius:6px; background:var(--purple) }
+.sound-seek::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; margin-top:-5px; border:3px solid white; border-radius:50%; background:var(--purple); box-shadow:0 1px 4px #29203d40 }
+.sound-seek::-moz-range-thumb { width:12px; height:12px; border:3px solid white; border-radius:50%; background:var(--purple); box-shadow:0 1px 4px #29203d40 }
+.sound-seek:focus-visible { outline:3px solid #007f78; outline-offset:2px; border-radius:6px }
