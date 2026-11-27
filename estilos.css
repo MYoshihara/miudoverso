@@ -316,3 +316,76 @@ main { flex:1 }
   .personal-fields { grid-template-columns:1fr }
   .personal-card[id] { scroll-margin-top:140px }
 }
+
+/* Cards inteiros clicáveis */
+.resource,.profile,.reading article,.area-card { position:relative; transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease }
+.card-link::after { content:""; position:absolute; inset:0; z-index:1; border-radius:inherit }
+.card-link:focus-visible { outline:none }
+.card-link:focus-visible::after { outline:3px solid #007f78; outline-offset:3px }
+.resource:has(.card-link):hover,.profile:hover,.reading article:hover,.area-card:hover { transform:translateY(-3px); border-color:#d6c3ea; box-shadow:0 14px 30px #3c245617 }
+:is(.resource,.profile,.reading article,.area-card):hover .card-link { color:var(--teal) }
+.resource:has(.card-link) .cover { z-index:2; pointer-events:none }
+.resource:has(.card-link) .save { pointer-events:auto }
+.save:hover { background:var(--lilac) }
+.chip:hover:not([aria-pressed=true]) { background:#faf5ff; border-color:#d6c3ea }
+
+/* Links dos cards alinhados na base */
+.resource { display:flex; flex-direction:column }
+.resource .card-copy { flex:1; grid-template-rows:auto auto 1fr auto }
+.reading article { grid-template-rows:auto auto 1fr auto }
+.profile { grid-template-rows:auto 1fr auto; align-content:stretch }
+.area-card { grid-template-rows:auto 1fr auto; align-content:stretch }
+
+/* Página inicial */
+.featured { padding-bottom:0 }
+.section-head > .text-link { flex:none }
+
+/* Catálogo sem resultados */
+.empty-state { grid-column:1 / -1; display:grid; justify-items:start; gap:14px; padding:clamp(20px,4vw,32px); border:1px dashed #d6c3ea; border-radius:var(--radius); background:white }
+
+/* Página do material */
+.material-secondary { display:flex; flex-wrap:wrap; align-items:center; gap:8px 20px }
+.save-toggle { gap:8px }
+.save-toggle svg { flex:none }
+.save-toggle[aria-pressed=true] { background:var(--lilac); border-color:var(--purple) }
+.save-toggle[aria-pressed=true] svg { fill:currentColor }
+.save-toggle .save-on,.save-toggle[aria-pressed=true] .save-off { display:none }
+.save-toggle[aria-pressed=true] .save-on { display:inline }
+.report-link { min-height:44px; color:var(--sub); font-size:.875rem; font-weight:650 }
+.material-detail { padding-bottom:clamp(36px,5vw,56px) }
+.related { border-top:1px solid var(--line); padding-top:clamp(36px,5vw,56px) }
+.related h2 { font-size:clamp(1.7rem,3vw,2.3rem) }
+
+/* Perguntas frequentes */
+.faq summary { list-style:none; display:flex; justify-content:space-between; align-items:center; gap:16px; min-height:44px }
+.faq summary::-webkit-details-marker { display:none }
+.faq summary::after { content:"+"; flex:none; color:var(--purple); font-size:1.5rem; font-weight:700; line-height:1 }
+.faq details[open] summary::after { content:"−" }
+.faq summary:hover { color:var(--purple) }
+
+/* Meu Miudoverso: botão de salvar sempre à vista */
+.personal-actions { position:sticky; bottom:0; z-index:3; padding:12px 0; background:linear-gradient(to top,var(--page) 75%,#fffdf900) }
+
+/* Rodapé */
+footer { padding-block:28px }
+.footer-inner { align-items:start }
+.footer-brand { display:grid; gap:8px }
+.footer-nav { display:flex; flex-wrap:wrap; gap:2px 22px }
+.footer-nav a { padding:6px 0; font-weight:650 }
+
+@media (max-width:650px) {
+  .header-inner nav { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none }
+  .header-inner nav::-webkit-scrollbar { display:none }
+  .header-inner nav a { flex:none }
+  .section-head > .text-link { order:2 }
+  .footer-inner { flex-direction:column; gap:16px }
+  .footer-nav { order:0; flex-basis:auto }
+}
+@media (prefers-reduced-motion:reduce) {
+  .resource,.profile,.reading article,.area-card { transition:none }
+  .resource:has(.card-link):hover,.profile:hover,.reading article:hover,.area-card:hover { transform:none }
+}
+@media (max-width:360px) {
+  .header-inner nav { gap:12px }
+  .header-inner nav a { font-size:.875rem }
+}

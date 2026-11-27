@@ -36,9 +36,21 @@ function renderCatalog() {
   });
   const count = shown.length;
   document.querySelector('#result').textContent = count === 0 ? 'Nenhum material encontrado.' : count + (count === 1 ? ' material encontrado' : ' materiais encontrados');
-  grid.innerHTML = shown.map(item => renderMaterialCard(item, materialLink(item), saved.has(item.id))).join('');
+  grid.innerHTML = count === 0
+    ? '<div class="empty-state"><p>Tente outra palavra ou remova os filtros para ver todos os materiais.</p>' +
+      '<button class="button outlined" type="button" data-clear-filters>Limpar busca e filtros</button></div>'
+    : shown.map(item => renderMaterialCard(item, materialLink(item), saved.has(item.id))).join('');
 }
 
+function clearFilters() {
+  query.value = '';
+  selectedFilter = 'todos';
+  for (const chip of document.querySelectorAll('#filters [data-filter]')) {
+    chip.setAttribute('aria-pressed', String(chip.dataset.filter === 'todos'));
+  }
+  renderCatalog();
+  query.focus();
+}
 function show(title, contents) {
   document.querySelector('#dialog-title').textContent = title;
   dialogBody.innerHTML = contents;
@@ -138,7 +150,7 @@ if (profileForm) {
     }
   }
   renderDemoAccount(readProfile(profileForm));
-  profileForm.addEventListener('input', () => { feedback.textContent = ''; });
+  profileForm.addEventListener('input', () => { feedback.textContent = 'Você tem alterações não salvas.'; });
   profileForm.addEventListener('submit', event => {
     event.preventDefault();
     const profile = readProfile(profileForm);
@@ -180,6 +192,7 @@ document.addEventListener('click', event => {
   }
   if (button.hasAttribute('data-buy')) document.querySelector('#purchase-feedback').textContent = 'Simulação concluída. Nenhum pagamento foi realizado.';
   if (button.hasAttribute('data-report')) report();
+  if (button.hasAttribute('data-clear-filters')) clearFilters();
 });
 dialog.addEventListener('submit', event => {
   const form = event.target;

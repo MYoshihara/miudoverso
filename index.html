@@ -21,7 +21,10 @@
 <main id="inicio">
 @content@
 </main>
-<footer><div class="wrap footer-inner"><a href="@base@"><img src="@base@assets/marca.webp" width="126" height="61" alt="Miudoverso — início"></a><p>Um universo de pequenas descobertas.</p><a href="@base@lista-de-espera/">Lista de espera</a></div></footer>
+<footer><div class="wrap footer-inner">
+  <div class="footer-brand"><a href="@base@"><img src="@base@assets/marca.webp" width="126" height="61" alt="Miudoverso — início"></a><p>Um universo de pequenas descobertas.</p></div>
+  <nav class="footer-nav" aria-label="Rodapé"><a href="@base@materiais/">Materiais</a><a href="@base@biblioteca/">Bibliotecas</a><a href="@base@conecta/">Conecta</a><a href="@base@inspira/">Inspira</a><a href="@base@lista-de-espera/">Lista de espera</a></nav>
+</div></footer>
 <dialog id="dialog" aria-labelledby="dialog-title">
   <div class="dialog-head"><h2 id="dialog-title"></h2><form method="dialog"><button class="close" autofocus aria-label="Fechar">×</button></form></div>
   <div id="dialog-body" class="dialog-body"></div>

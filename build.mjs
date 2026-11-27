@@ -3,7 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { biblioteca, materialPath, materials, profissionais } from './dados.js';
-import { escapeHtml, renderMaterialCard } from './material-card.js';
+import { bookmark, escapeHtml, renderMaterialCard } from './material-card.js';
 
 const { values } = parseArgs({ options: { 'static-output': { type: 'string' } } });
 const staticOutput = values['static-output'];
@@ -11,7 +11,7 @@ const staticOutput = values['static-output'];
 const home = 'Miudoverso — Materiais para pedagogia e fonoaudiologia';
 const profilePath = slug => 'conecta/' + slug + '/';
 const pages = [
-  ['/', 'inicio', home, 'Atividades, e-books e recursos de linguagem para pedagogia e fonoaudiologia.'],
+  ['/', 'inicio', home, 'Atividades, e-books e recursos de linguagem para pedagogia e fonoaudiologia.', '', true],
   ['/materiais/', 'materiais', 'Materiais | Miudoverso', 'Atividades para imprimir, recursos de linguagem e e-books.', 'materiais', true],
   ['/biblioteca/', 'biblioteca', 'Bibliotecas | Miudoverso', 'Imagens e sons gratuitos para atividades de linguagem, vocabulário e escuta.', 'biblioteca', 'biblioteca.js'],
   ['/conecta/', 'conecta', 'Conecta | Miudoverso', 'Perfis e materiais autorais de profissionais de pedagogia e fonoaudiologia.', 'conecta', true],
@@ -63,7 +63,7 @@ function profileCards(base) {
       <span class="avatar ${escapeHtml(person.color)}" aria-hidden="true">${escapeHtml(person.initials)}</span>
       <div><h2>${escapeHtml(person.name)}</h2><p class="label">${escapeHtml(person.role)}</p></div>
       <p class="bio">${escapeHtml(person.bio)}</p>
-      <a class="text-link" href="${base + escapeHtml(profilePath(person.slug))}" aria-label="${escapeHtml('Ver perfil de ' + person.name)}">Ver perfil</a>
+      <a class="text-link card-link" href="${base + escapeHtml(profilePath(person.slug))}" aria-label="${escapeHtml('Ver perfil de ' + person.name)}">Ver perfil</a>
     </article>`).join('');
 }
 
@@ -223,7 +223,11 @@ function materialDetails(item, base) {
     kind: escapeHtml(item.type),
     color: escapeHtml(item.color),
     art: escapeHtml(item.art),
-    access: purchase || free
+    access: purchase || free,
+    id: escapeHtml(item.id),
+    bookmark,
+    related: materials.filter(other => other.id !== item.id)
+      .map(other => renderMaterialCard(other, base + materialPath(other))).join('')
   };
 }
 
@@ -281,6 +285,7 @@ for (const [route, fragment, title, description, active, script, data] of pages)
     };
   }
   if (fragment === 'conecta') bodyValues.profiles = profileCards(base);
+  if (fragment === 'inicio') bodyValues.featured = materials.map(item => renderMaterialCard(item, base + materialPath(item))).join('');
   if (fragment === 'material') bodyValues = materialDetails(data, base);
   if (fragment === 'biblioteca') {
     bodyValues.images = biblioteca.filter(item => item.mime.startsWith('image/')).map(item => libraryCard(item, base)).join('');
