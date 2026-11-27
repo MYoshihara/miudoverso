@@ -2,25 +2,45 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { parseArgs } from 'node:util';
-import { biblioteca, materialPath, materials, profissionais, publicacoes } from './dados.js';
-import { bookmark, escapeHtml, renderMaterialCard } from './material-card.js';
+import { artigos, biblioteca, materialPath, materials, paginacao, privacidade, profissionais, publicacoes, site } from './dados.js';
+import { bookmark, escapeHtml, renderMaterialCard, renderPagination } from './material-card.js';
 
-const { values } = parseArgs({ options: { 'static-output': { type: 'string' } } });
+const { values } = parseArgs({ options: { 'static-output': { type: 'string' }, demo: { type: 'boolean' } } });
 const staticOutput = values['static-output'];
+// --demo gera a versão estática sem PHP: a lista de espera simula o envio e não há estatísticas.
+const demo = values.demo === true;
 
 const home = 'Miudoverso — Materiais para pedagogia e fonoaudiologia';
+
+// Listas longas viram páginas numeradas: /visual/, /visual/pagina/2/, /visual/pagina/3/...
+const perPage = key => Number(process.env.MIUDOVERSO_POR_PAGINA) || paginacao[key];
+const pageRoute = (route, page) => page === 1 ? route : route + 'pagina/' + page + '/';
+function paged(route, key, items, fragment, title, description, active, script) {
+  const size = perPage(key);
+  const total = Math.max(1, Math.ceil(items.length / size));
+  return Array.from({ length: total }, (_, index) => [
+    pageRoute(route, index + 1), fragment, index ? title + ' · página ' + (index + 1) : title, description, active, script,
+    { route, page: index + 1, total, items: items.slice(index * size, (index + 1) * size) }
+  ]);
+}
+const images = biblioteca.filter(item => item.mime.startsWith('image/'));
+const sounds = biblioteca.filter(item => item.mime.startsWith('audio/'));
 const profilePath = slug => 'conecta/' + slug + '/';
 const pages = [
   ['/', 'inicio', home, 'Atividades, e-books e recursos de linguagem para pedagogia e fonoaudiologia.', '', true],
   ['/materiais/', 'materiais', 'Miudoverso Materiais', 'Recursos para download: atividades para imprimir, fichas de linguagem e e-books.', 'materiais', true],
-  ['/visual/', 'visual', 'Miudoverso Visual', 'Biblioteca de imagens gratuitas para atividades de linguagem e vocabulário.', 'visual'],
-  ['/sons/', 'sons', 'Miudoverso Sons', 'Recursos sonoros gratuitos para atividades de escuta, ritmo e linguagem.', 'sons', 'biblioteca.js'],
-  ['/inspira/', 'inspira', 'Miudoverso Inspira', 'Blog e conteúdos para quem aplica, adapta e cria materiais.', 'inspira'],
+  ...paged('/visual/', 'visual', images, 'visual', 'Miudoverso Visual', 'Biblioteca de imagens gratuitas para atividades de linguagem e vocabulário.', 'visual'),
+  ...paged('/sons/', 'sons', sounds, 'sons', 'Miudoverso Sons', 'Recursos sonoros gratuitos para atividades de escuta, ritmo e linguagem.', 'sons', 'biblioteca.js'),
+  ...paged('/inspira/', 'inspira', artigos, 'inspira', 'Miudoverso Inspira', 'Blog e conteúdos para quem aplica, adapta e cria materiais.', 'inspira'),
+  ...paged('/conecta/profissionais/', 'profissionais', profissionais, 'profissionais', 'Profissionais | Miudoverso Conecta', 'Conheça profissionais de pedagogia e fonoaudiologia que criam materiais.', 'conecta', true),
   ['/conecta/', 'conecta', 'Miudoverso Conecta', 'Feed, perfis, portfólios e lojinhas de profissionais de pedagogia e fonoaudiologia.', 'conecta', true],
   ['/meu-miudoverso/', 'meu-miudoverso', 'Meu Miudoverso', 'Seus materiais salvos e seu perfil profissional.', 'meu-miudoverso', true],
   ['/lista-de-espera/', 'lista-de-espera', 'Lista de espera | Miudoverso', 'Participe da primeira turma do Miudoverso.', '', true],
-  ['/inspira/rimas/', 'rimas', 'Como adaptar uma atividade de rimas | Miudoverso Inspira', 'Como variar uma atividade de rimas para diferentes turmas.', 'inspira'],
-  ['/inspira/ebook-autoral/', 'ebook-autoral', 'Antes de publicar seu primeiro e-book | Miudoverso Inspira', 'Uma revisão para quem quer publicar atividades, guias ou cadernos digitais.', 'inspira'],
+  ['/criadores/', 'criadores', 'Miudoverso para quem cria', 'Publique e venda atividades e e-books: comissão, planos e simulador de ganhos.', 'conecta', 'criadores.js'],
+  ['/criar-perfil/', 'criar-perfil', 'Criar meu perfil | Miudoverso', 'Crie seu perfil profissional no Miudoverso Conecta.', 'meu-miudoverso', 'cadastro.js'],
+  ['/privacidade/', 'privacidade', 'Política de privacidade | Miudoverso', 'Como a prévia do Miudoverso trata os seus dados.'],
+  ['/404/', '404', 'Página não encontrada | Miudoverso', 'Esta página não existe ou mudou de endereço.'],
+  ...artigos.map(article => ['/inspira/' + article.slug + '/', article.slug, article.title + ' | Miudoverso Inspira', article.summary, 'inspira']),
   ...profissionais.map(person => [
     '/' + profilePath(person.slug), 'perfil-profissional', person.name + ' | Miudoverso Conecta',
     person.bio, 'conecta', 'perfil-tabs.js', person
@@ -36,11 +56,16 @@ const portfolioImages = new Set(profissionais.flatMap(person =>
 const assets = [
   ['estilos.css', 'text/css; charset=utf-8'],
   ['miudoverso.js', 'text/javascript; charset=utf-8'],
+  ['metricas.js', 'text/javascript; charset=utf-8'],
+  ['criadores.js', 'text/javascript; charset=utf-8'],
+  ['cadastro.js', 'text/javascript; charset=utf-8'],
   ['perfil-tabs.js', 'text/javascript; charset=utf-8'],
   ['material-card.js', 'text/javascript; charset=utf-8'],
   ['dados.js', 'text/javascript; charset=utf-8'],
   ['biblioteca.js', 'text/javascript; charset=utf-8'],
   ['assets/marca.webp', 'image/webp', true],
+  ['assets/compartilhar.jpg', 'image/jpeg', true],
+  ['assets/fontes/figtree.woff2', 'font/woff2', true],
   ['assets/simbolo.webp', 'image/webp', true],
   ...Array.from(portfolioImages, path => [path, 'image/jpeg', true]),
   ...biblioteca.map(({ path, mime }) => [path, mime, true]),
@@ -56,6 +81,13 @@ for (const [index, [path]] of assets.entries()) {
 const assetRevision = assetHash.digest('hex').slice(0, 12);
 const layout = await readFile('index.html', 'utf8');
 const files = Object.create(null);
+const sitePath = new URL(site.url).pathname;
+const pending = value => value.startsWith('[definir');
+const privacyValue = value => pending(value) ? '<mark class="to-define">' + escapeHtml(value) + '</mark>' : escapeHtml(value);
+for (const [field, value] of Object.entries(privacidade)) {
+  if (pending(value)) console.warn('Atenção: preencha privacidade.' + field + ' em dados.js antes de divulgar a prévia.');
+}
+let notFound;
 const redirects = Object.create(null);
 
 const personBySlug = new Map(profissionais.map(person => [person.slug, person]));
@@ -99,8 +131,8 @@ function renderPost(post, base, showFollow = true) {
     </article>`;
 }
 
-function profileCards(base) {
-  return profissionais.map(person => `
+function profileCards(people, base) {
+  return people.map(person => `
     <article class="profile">
       <span class="avatar ${escapeHtml(person.color)}" aria-hidden="true">${escapeHtml(person.initials)}</span>
       <div><h3>${escapeHtml(person.name)}</h3><p class="label">${escapeHtml(person.role)}</p></div>
@@ -279,7 +311,8 @@ function materialDetails(item, base) {
     id: escapeHtml(item.id),
     bookmark,
     related: materials.filter(other => other.id !== item.id)
-      .map(other => renderMaterialCard(other, base + materialPath(other))).join('')
+      .sort((a, b) => (b.authorSlug === item.authorSlug) - (a.authorSlug === item.authorSlug) || (b.area === item.area) - (a.area === item.area))
+      .slice(0, 3).map(other => renderMaterialCard(other, base + materialPath(other))).join('')
   };
 }
 
@@ -321,7 +354,7 @@ for (const [route, fragment, title, description, active, script, data] of pages)
   const path = route.slice(1) + 'index.html';
   const body = await readFile('paginas/' + fragment + '.html', 'utf8');
   const current = name => name === active ? ' aria-current="page"' : '';
-  const scripts = script ? [script === true ? 'miudoverso.js' : script] : [];
+  const scripts = ['metricas.js', ...(script ? [script === true ? 'miudoverso.js' : script] : [])];
   let bodyValues = {};
   if (fragment === 'perfil-profissional') {
     const person = data;
@@ -336,29 +369,63 @@ for (const [route, fragment, title, description, active, script, data] of pages)
       ...profileDetails(person, shopItems, base)
     };
   }
+  if (fragment === 'privacidade') {
+    bodyValues = {
+      controller: privacyValue(privacidade.responsavel),
+      email: pending(privacidade.email) ? privacyValue(privacidade.email)
+        : '<a href="mailto:' + escapeHtml(privacidade.email) + '">' + escapeHtml(privacidade.email) + '</a>',
+      updated: escapeHtml(privacidade.atualizada)
+    };
+  }
+  if (data?.page) {
+    bodyValues.pagination = renderPagination(data.page, data.total, page => base + pageRoute(data.route, page).slice(1));
+  }
+  if (fragment === 'profissionais') bodyValues.profiles = profileCards(data.items, base);
+  if (fragment === 'inspira') {
+    bodyValues.articles = data.items.map(article => `
+      <article><p class="label">${escapeHtml(article.label)}</p><h3>${escapeHtml(article.title)}</h3><p>${escapeHtml(article.summary)}</p><a href="${base}inspira/${escapeHtml(article.slug)}/" class="text-link card-link">${escapeHtml(article.link)}</a></article>`).join('');
+  }
+  if (fragment === 'materiais') bodyValues['per-page'] = String(perPage('materiais'));
   if (fragment === 'conecta') {
-    bodyValues.profiles = profileCards(base);
+    const shown = 4;
+    bodyValues.profiles = profileCards(profissionais.slice(0, shown), base);
+    bodyValues['all-profiles'] = `<a class="text-link" href="${base}conecta/profissionais/">Ver todos os profissionais (${profissionais.length})</a>`;
+    bodyValues['feed-per-page'] = String(perPage('feed'));
     bodyValues.posts = publicacoes.map(post => renderPost(post, base)).join('');
+    const option = (value, label) => '<option value="' + escapeHtml(value) + '">' + escapeHtml(label) + '</option>';
+    bodyValues['attach-options'] = option('', 'Nada') +
+      '<optgroup label="Materiais">' + materials.map(item => option('material:' + item.id, item.title)).join('') + '</optgroup>' +
+      '<optgroup label="Visual">' + biblioteca.filter(item => item.mime.startsWith('image/')).map(item => option('visual:' + item.path, item.title)).join('') + '</optgroup>' +
+      '<optgroup label="Sons">' + biblioteca.filter(item => item.mime.startsWith('audio/')).map(item => option('sons:' + item.path, item.title)).join('') + '</optgroup>';
   }
   if (fragment === 'inicio') {
-    bodyValues.featured = materials.map(item => renderMaterialCard(item, base + materialPath(item))).join('');
+    bodyValues.featured = ['rimas', 'bingo', 'pranchas'].map(id => materials.find(item => item.id === id))
+      .map(item => renderMaterialCard(item, base + materialPath(item))).join('');
     bodyValues['latest-posts'] = publicacoes.slice(0, 2).map(post => renderPost(post, base)).join('');
   }
   if (fragment === 'material') bodyValues = materialDetails(data, base);
-  if (fragment === 'visual') bodyValues.images = biblioteca.filter(item => item.mime.startsWith('image/')).map(item => libraryCard(item, base)).join('');
-  if (fragment === 'sons') bodyValues.sounds = biblioteca.filter(item => item.mime.startsWith('audio/')).map(item => libraryCard(item, base)).join('');
+  if (fragment === 'visual') bodyValues.images = data.items.map(item => libraryCard(item, base)).join('');
+  if (fragment === 'sons') bodyValues.sounds = data.items.map(item => libraryCard(item, base)).join('');
   const values = {
     base, title: escapeHtml(title), description: escapeHtml(description), revision:assetRevision,
     script: scripts.map(file => '<script type="module" src="' + base + file + '?v=' + assetRevision + '"></script>').join('\n'),
     nav: nav.map(([slug, label]) => '<a href="' + base + slug + '/"' + current(slug) + '>' + label + '</a>').join(''),
     account: current('meu-miudoverso')
   };
-  function render(demo) {
+  // Na hospedagem PHP os endpoints ficam em api/*.php; no Worker, em /api/*.
+  function render(target) {
+    const demo = target === 'demo';
+    const endpoint = name => demo ? '' : target === 'php' ? base + 'api/' + name + '.php' : '/api/' + name;
     return fill(layout, {
       ...values,
+      route,
+      'page-url': escapeHtml(site.url + route.slice(1)),
+      'share-image': escapeHtml(site.url + 'assets/compartilhar.jpg'),
+      events: endpoint('evento'),
       content: fill(body, {
         ...bodyValues,
         base,
+        'waitlist-endpoint': endpoint('lista-de-espera'),
         'waitlist-mode': demo ? ' data-demo' : '',
         'waitlist-email': demo ? 'E-mail de teste' : 'Seu e-mail',
         'waitlist-note': demo
@@ -368,9 +435,19 @@ for (const [route, fragment, title, description, active, script, data] of pages)
       })
     });
   }
-  await emit(join(staticOutput ?? 'publicacao-estatica', path), render(true));
-  files[route] = ['text/html; charset=utf-8', render(false), false];
+  // A página de erro é servida em qualquer endereço, então usa caminhos absolutos.
+  if (route === '/404/') {
+    const absolute = (html, root) => html.replaceAll('="../', '="' + root);
+    notFound = { static: absolute(render(demo ? 'demo' : 'php'), sitePath), worker: absolute(render('worker'), '/') };
+    continue;
+  }
+  await emit(join(staticOutput ?? 'publicacao-estatica', path), render(demo ? 'demo' : 'php'));
+  files[route] = ['text/html; charset=utf-8', render('worker'), false];
   redirects[route + 'index.html'] = route;
+  if (data?.page === 1) {
+    redirects[route + 'pagina/1/'] = route;
+    redirects[route + 'pagina/'] = route;
+  }
   if (route !== '/') redirects[route.slice(0, -1)] = route;
 }
 for (const [index, [path, type, binary, filename]] of assets.entries()) {
@@ -386,6 +463,14 @@ await emit(join(staticOutput ?? 'publicacao-estatica', 'biblioteca/index.html'),
   '<body><p><a href="../visual/">As Bibliotecas agora são o Miudoverso Visual e o Miudoverso Sons.</a></p></body></html>');
 for (const filename of ['marca.webp', 'simbolo.webp', 'cartas-de-rimas.pdf']) {
   redirects['/' + filename] = '/assets/' + filename;
+}
+await emit(join(staticOutput ?? 'publicacao-estatica', '404.html'), notFound.static);
+files['/404.html'] = ['text/html; charset=utf-8', notFound.worker, false];
+if (!demo) {
+  await emit(join(staticOutput ?? 'publicacao-estatica', '.htaccess'), 'ErrorDocument 404 ' + sitePath + '404.html\n');
+  for (const file of ['comum.php', 'lista-de-espera.php', 'evento.php', 'relatorio.php', '.htaccess']) {
+    await emit(join(staticOutput ?? 'publicacao-estatica', 'api', file), await readFile(join('php', file)));
+  }
 }
 if (staticOutput === undefined) {
   const server = await readFile('worker.mjs', 'utf8');

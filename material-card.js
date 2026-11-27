@@ -22,3 +22,27 @@ export function renderMaterialCard(item, href, saved = false) {
       </div>
     </article>`;
 }
+
+// Navegação entre páginas, usada pelo build e pelo catálogo no navegador.
+// hrefFor(n) devolve o endereço da página n.
+export function renderPagination(current, total, hrefFor, label = 'Páginas') {
+  if (total <= 1) return '';
+  const numbers = [...new Set([1, current - 1, current, current + 1, total])]
+    .filter(page => page >= 1 && page <= total).sort((a, b) => a - b);
+  let items = '';
+  numbers.forEach((page, index) => {
+    if (index && page - numbers[index - 1] > 1) items += '<li class="pagination-gap" aria-hidden="true">…</li>';
+    items += page === current
+      ? `<li><a href="${escapeHtml(hrefFor(page))}" aria-current="page" aria-label="Página ${page}, atual">${page}</a></li>`
+      : `<li><a href="${escapeHtml(hrefFor(page))}" data-page="${page}" aria-label="Página ${page}">${page}</a></li>`;
+  });
+  const step = (page, text, rel) => page < 1 || page > total
+    ? `<span class="pagination-step" aria-hidden="true">${text}</span>`
+    : `<a class="pagination-step" href="${escapeHtml(hrefFor(page))}" data-page="${page}" rel="${rel}">${text}</a>`;
+  return `<nav class="pagination" aria-label="${escapeHtml(label)}">
+    ${step(current - 1, '← Anterior', 'prev')}
+    <ol>${items}</ol>
+    ${step(current + 1, 'Próxima →', 'next')}
+    <p class="pagination-status">Página ${current} de ${total}</p>
+  </nav>`;
+}

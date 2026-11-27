@@ -5,7 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>@title@</title>
 <meta name="description" content="@description@">
+<link rel="canonical" href="@page-url@">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Miudoverso">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:title" content="@title@">
+<meta property="og:description" content="@description@">
+<meta property="og:url" content="@page-url@">
+<meta property="og:image" content="@share-image@">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Miudoverso: boas ideias para pequenas descobertas.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="miudoverso-pagina" content="@route@">
+<meta name="miudoverso-eventos" content="@events@">
 <link rel="icon" href="@base@assets/simbolo.webp" type="image/webp">
+<link rel="preload" href="@base@assets/fontes/figtree.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="@base@estilos.css?v=@revision@">
 @script@
 </head>
@@ -23,7 +38,7 @@
 </main>
 <footer><div class="wrap footer-inner">
   <div class="footer-brand"><a href="@base@"><img src="@base@assets/marca.webp" width="126" height="61" alt="Miudoverso — início"></a><p>Um universo de pequenas descobertas.</p></div>
-  <nav class="footer-nav" aria-label="Rodapé"><a href="@base@materiais/">Materiais</a><a href="@base@visual/">Visual</a><a href="@base@sons/">Sons</a><a href="@base@inspira/">Inspira</a><a href="@base@conecta/">Conecta</a><a href="@base@lista-de-espera/">Lista de espera</a></nav>
+  <nav class="footer-nav" aria-label="Rodapé"><a href="@base@materiais/">Materiais</a><a href="@base@visual/">Visual</a><a href="@base@sons/">Sons</a><a href="@base@inspira/">Inspira</a><a href="@base@conecta/">Conecta</a><a href="@base@criadores/">Para quem cria</a><a href="@base@lista-de-espera/">Lista de espera</a><a href="@base@privacidade/">Privacidade</a></nav>
 </div></footer>
 <dialog id="dialog" aria-labelledby="dialog-title">
   <div class="dialog-head"><h2 id="dialog-title"></h2><form method="dialog"><button class="close" autofocus aria-label="Fechar">×</button></form></div>

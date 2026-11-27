@@ -1,0 +1,114 @@
+# Roda os testes em cada pull request e, a cada atualização do main,
+# publica o site em https://preview.ywd.com.br/miudoverso/ pelo npm run publicar.
+name: Testar e publicar
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  testes:
+    name: Testes
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Garantir PHP com SQLite
+        run: php -m | grep -qi pdo_sqlite || (sudo apt-get update && sudo apt-get install -y php-cli php-sqlite3)
+
+      - name: Instalar dependências
+        run: npm ci --no-audit --no-fund
+
+      - name: Instalar o Chromium do Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Rodar os testes
+        run: npm test
+
+  publicar:
+    name: Publicar na Hostinger
+    needs: testes
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: preview
+      url: https://preview.ywd.com.br/miudoverso/
+    concurrency:
+      group: publicar-preview
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Conferir a configuração de acesso
+        id: acesso
+        env:
+          SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.HOSTINGER_KNOWN_HOSTS }}
+          HOSTINGER_HOST: ${{ vars.HOSTINGER_HOST }}
+          HOSTINGER_PORT: ${{ vars.HOSTINGER_PORT }}
+          HOSTINGER_USER: ${{ vars.HOSTINGER_USER }}
+        run: |
+          faltando=()
+          [[ -n $SSH_KEY ]] || faltando+=(HOSTINGER_SSH_KEY)
+          [[ -n $KNOWN_HOSTS ]] || faltando+=(HOSTINGER_KNOWN_HOSTS)
+          [[ -n $HOSTINGER_HOST ]] || faltando+=(HOSTINGER_HOST)
+          [[ -n $HOSTINGER_PORT ]] || faltando+=(HOSTINGER_PORT)
+          [[ -n $HOSTINGER_USER ]] || faltando+=(HOSTINGER_USER)
+          if (( ${#faltando[@]} )); then
+            echo "::warning::Publicação pulada. Configure no ambiente 'preview' do GitHub: ${faltando[*]}. Veja o README."
+            echo "pronto=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "pronto=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configurar o acesso SSH
+        if: steps.acesso.outputs.pronto == 'true'
+        env:
+          SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.HOSTINGER_KNOWN_HOSTS }}
+          HOSTINGER_HOST: ${{ vars.HOSTINGER_HOST }}
+          HOSTINGER_PORT: ${{ vars.HOSTINGER_PORT }}
+          HOSTINGER_USER: ${{ vars.HOSTINGER_USER }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/hostinger
+          chmod 600 ~/.ssh/hostinger
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          printf 'Host hostinger\n  HostName %s\n  Port %s\n  User %s\n  IdentityFile ~/.ssh/hostinger\n  IdentitiesOnly yes\n' \
+            "$HOSTINGER_HOST" "$HOSTINGER_PORT" "$HOSTINGER_USER" > ~/.ssh/config
+          chmod 600 ~/.ssh/config
+
+      - name: Publicar
+        if: steps.acesso.outputs.pronto == 'true'
+        env:
+          MIUDOVERSO_PREVIEW_DEMO: "1"
+        run: npm run publicar
+
+      - name: Verificar a demonstração publicada
+        if: steps.acesso.outputs.pronto == 'true'
+        run: |
+          base=https://preview.ywd.com.br/miudoverso
+          pagina=$(curl --fail --silent --show-error --retry 3 --max-time 20 "$base/lista-de-espera/?deploy=$GITHUB_SHA")
+          grep -q 'data-demo' <<< "$pagina"
+          status=$(curl --silent --show-error --max-time 20 -o /dev/null -w '%{http_code}' "$base/api/lista-de-espera.php")
+          [[ "$status" == 403 || "$status" == 404 ]]
+
+      - name: Apagar a chave do runner
+        if: always()
+        run: rm -f ~/.ssh/hostinger

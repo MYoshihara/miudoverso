@@ -1,0 +1,37 @@
+<section class="wrap section signup" aria-labelledby="signup-title">
+  <div class="signup-head">
+    <p class="eyebrow">Meu Miudoverso</p>
+    <h1 id="signup-title">Criar meu perfil</h1>
+    <p class="lede">Três etapas para aparecer no Miudoverso Conecta. Demonstração: os dados ficam só neste navegador e não são enviados.</p>
+  </div>
+  <noscript><p>Ative o JavaScript para criar seu perfil de demonstração.</p></noscript>
+  <form class="form signup-form" id="signup" hidden novalidate>
+    <ol class="signup-progress" aria-label="Etapas">
+      <li data-step-label="1">Sua conta</li><li data-step-label="2">Seu perfil</li><li data-step-label="3">Revisão</li>
+    </ol>
+    <fieldset class="signup-step" data-step="1">
+      <legend>Sua conta</legend>
+      <label>Nome completo<input name="fullName" autocomplete="name" maxlength="120" required></label>
+      <label>E-mail<input name="personalEmail" type="email" autocomplete="email" maxlength="254" required></label>
+      <label>Área de atuação<select name="area" required><option value="">Selecione sua área</option><option>Pedagogia</option><option>Fonoaudiologia</option><option>Outra área</option></select></label>
+    </fieldset>
+    <fieldset class="signup-step" data-step="2" hidden>
+      <legend>Seu perfil no Conecta</legend>
+      <label>Nome de exibição<input name="displayName" maxlength="70" required></label>
+      <label>Profissão ou área de atuação<input name="role" maxlength="90" required placeholder="Ex.: Fonoaudióloga"></label>
+      <label>Resumo profissional<input name="bio" maxlength="160" required placeholder="Uma frase sobre o que você faz"></label>
+      <label>Especialidades <small class="form-note">Uma por linha.</small><textarea name="specialties" rows="3" maxlength="400"></textarea></label>
+      <label>Cidade e estado<input name="location" maxlength="100" placeholder="Ex.: Campinas, SP"></label>
+    </fieldset>
+    <fieldset class="signup-step" data-step="3" hidden>
+      <legend>Revise seu perfil</legend>
+      <div class="signup-review" id="signup-review"></div>
+    </fieldset>
+    <p class="feedback" id="signup-feedback" role="status"></p>
+    <div class="signup-actions">
+      <button class="button outlined" type="button" data-signup-back hidden>Voltar</button>
+      <button class="button primary" type="button" data-signup-next>Continuar</button>
+      <button class="button primary" type="submit" hidden>Criar perfil</button>
+    </div>
+  </form>
+</section>

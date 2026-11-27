@@ -1,13 +1,23 @@
 import { execFile } from 'node:child_process';
 import { createServer } from 'node:http';
 import { Readable } from 'node:stream';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { DatabaseSync } from 'node:sqlite';
 import worker from './dist/server/index.js';
 
 const database = new DatabaseSync(process.env.MIUDOVERSO_DB ?? 'inscricoes.sqlite');
-const schema = await readFile('drizzle/0000_waitlist.sql', 'utf8');
-database.exec(schema.replace('CREATE TABLE waitlist', 'CREATE TABLE IF NOT EXISTS waitlist'));
+// Aplica cada migração de drizzle/ uma única vez, na ordem dos arquivos.
+database.exec('CREATE TABLE IF NOT EXISTS _migracoes (nome TEXT PRIMARY KEY NOT NULL)');
+const applied = new Set(database.prepare('SELECT nome FROM _migracoes').all().map(row => row.nome));
+const hasWaitlist = database.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'waitlist'").get();
+if (hasWaitlist && !applied.size) applied.add('0000_waitlist.sql');
+for (const name of (await readdir('drizzle')).filter(file => file.endsWith('.sql')).sort()) {
+  if (applied.has(name)) continue;
+  database.exec('BEGIN');
+  database.exec(await readFile('drizzle/' + name, 'utf8'));
+  database.prepare('INSERT OR IGNORE INTO _migracoes (nome) VALUES (?)').run(name);
+  database.exec('COMMIT');
+}
 const env = { DB: { prepare: sql => ({ bind: (...values) => ({ run: () => database.prepare(sql).run(...values) }) }) } };
 const server = createServer(async (incoming, outgoing) => {
   const method = incoming.method;

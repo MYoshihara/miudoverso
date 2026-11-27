@@ -1,5 +1,6 @@
 const areas = new Set(['pedagogia', 'fonoaudiologia', 'outra']);
 const interests = new Set(['baixar', 'compartilhar', 'vender']);
+const sections = new Set(['materiais', 'visual', 'sons', 'conecta', 'inspira']);
 
 function reply(message, status = 200) {
   return Response.json({ message }, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -33,19 +34,44 @@ async function enroll(request, env, url) {
   }
   if (!form || typeof form !== 'object') return reply('Confira os dados e tente novamente.', 400);
   const email = typeof form.email === 'string' ? form.email.trim().toLowerCase() : '';
+  const chosen = form.areas ?? [];
   if (!/^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/.test(email) || email.length > 254 ||
-      !areas.has(form.area) || !interests.has(form.interesse) || form.consent !== true) {
+      !areas.has(form.area) || !interests.has(form.interesse) || form.consent !== true ||
+      !Array.isArray(chosen) || chosen.length > sections.size || !chosen.every(area => sections.has(area))) {
     return reply('Informe um e-mail válido, selecione as opções e confirme seu interesse no piloto.', 400);
   }
   if (form.website) return reply('Inscrição confirmada. Obrigado pelo interesse!', 201);
   try {
     await env.DB.prepare(
-      'INSERT INTO waitlist (email, area, interesse) VALUES (?, ?, ?) ON CONFLICT(email) DO UPDATE SET area = excluded.area, interesse = excluded.interesse'
-    ).bind(email, form.area, form.interesse).run();
+      'INSERT INTO waitlist (email, area, interesse, areas) VALUES (?, ?, ?, ?) ON CONFLICT(email) DO UPDATE SET area = excluded.area, interesse = excluded.interesse, areas = excluded.areas'
+    ).bind(email, form.area, form.interesse, [...new Set(chosen)].join(',')).run();
   } catch {
     return reply('O formulário está temporariamente indisponível. Seus dados não foram confirmados.', 503);
   }
   return reply('Inscrição confirmada. Avisaremos por e-mail quando o piloto estiver disponível.', 201);
+}
+
+// Estatística anônima: dia, página e ação, sem IP, cookies ou identificadores.
+async function track(request, env, url) {
+  const origin = request.headers.get('Origin');
+  if (origin && origin !== url.origin) return new Response(null, { status: 403 });
+  if (!request.headers.get('Content-Type')?.startsWith('application/json')) return new Response(null, { status: 415 });
+  const text = await request.text();
+  if (text.length > 512) return new Response(null, { status: 413 });
+  let event;
+  try { event = JSON.parse(text); } catch { return new Response(null, { status: 400 }); }
+  const alvo = event?.alvo ?? '';
+  if (!['visita', 'acao'].includes(event?.tipo) || typeof event.pagina !== 'string' ||
+      !/^\/[a-z0-9\-\/.]{0,118}$/.test(event.pagina) || typeof alvo !== 'string' || !/^[a-z0-9\-\/.:]{0,120}$/.test(alvo)) {
+    return new Response(null, { status: 400 });
+  }
+  try {
+    await env.DB.prepare('INSERT INTO eventos (dia, tipo, pagina, alvo) VALUES (?, ?, ?, ?)')
+      .bind(new Date().toISOString().slice(0, 10), event.tipo, event.pagina, alvo).run();
+  } catch {
+    return new Response(null, { status: 503 });
+  }
+  return new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store' } });
 }
 
 function audioResponse(request, body, headers) {
@@ -79,13 +105,21 @@ const worker = {
       if (request.method !== 'POST') return new Response(null, { status: 405, headers: { Allow: 'POST' } });
       return enroll(request, env, url);
     }
+    if (url.pathname === '/api/evento') {
+      if (request.method !== 'POST') return new Response(null, { status: 405, headers: { Allow: 'POST' } });
+      return track(request, env, url);
+    }
     if (request.method !== 'GET' && request.method !== 'HEAD') {
       return new Response(null, { status: 405, headers: { Allow: 'GET, HEAD' } });
     }
     const redirect = redirects[url.pathname];
     if (redirect) return Response.redirect(new URL(redirect + url.search, url), 308);
     const file = files[url.pathname];
-    if (!file) return new Response('Página não encontrada.', { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+    if (!file) {
+      return new Response(request.method === 'HEAD' ? null : files['/404.html'][1], {
+        status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' }
+      });
+    }
     const [type, content, base64, filename] = file;
     const body = base64 ? Uint8Array.from(atob(content), value => value.charCodeAt(0)) : content;
     const headers = {

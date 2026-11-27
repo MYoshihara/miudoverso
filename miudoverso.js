@@ -1,5 +1,5 @@
 const assetVersion = new URL(import.meta.url).search;
-const [{ demoProfile, materials, materialPath, profissionais }, { escapeHtml, renderMaterialCard }] = await Promise.all([
+const [{ biblioteca, demoProfile, materials, materialPath, profissionais }, { escapeHtml, renderMaterialCard, renderPagination }] = await Promise.all([
   import('./dados.js' + assetVersion),
   import('./material-card.js' + assetVersion)
 ]);
@@ -20,6 +20,12 @@ let likes;
 let following;
 let selectedFilter = 'todos';
 let selectedFeed = 'todos';
+let catalogPage = 1;
+const catalogSize = Number(grid?.dataset.perPage) || 12;
+const feedSize = Number(feed?.dataset.perPage) || 10;
+let feedLimit = feedSize;
+
+const track = alvo => window.miudoversoMetrica?.(alvo);
 
 function loadSet(key) {
   try {
@@ -48,15 +54,41 @@ function comparable(value) {
 function materialLink(item) {
   return new URL(materialPath(item), import.meta.url).href;
 }
+// Busca, filtro e página ficam no endereço (?busca=&filtro=&pagina=) para o voltar e o compartilhar funcionarem.
+function catalogUrl(page = catalogPage) {
+  const params = new URLSearchParams();
+  if (query.value.trim()) params.set('busca', query.value.trim());
+  if (selectedFilter !== 'todos') params.set('filtro', selectedFilter);
+  if (page > 1) params.set('pagina', String(page));
+  const search = params.toString();
+  return location.pathname + (search ? '?' + search : '');
+}
+function readCatalogUrl() {
+  const params = new URLSearchParams(location.search);
+  query.value = params.get('busca') ?? '';
+  const filter = params.get('filtro');
+  selectedFilter = document.querySelector(`#filters [data-filter="${CSS.escape(filter ?? '')}"]`) ? filter : 'todos';
+  catalogPage = Math.max(1, Number.parseInt(params.get('pagina'), 10) || 1);
+  for (const chip of document.querySelectorAll('#filters [data-filter]')) {
+    chip.setAttribute('aria-pressed', String(chip.dataset.filter === selectedFilter));
+  }
+}
 function renderCatalog() {
   const term = comparable(query.value);
-  const shown = materials.filter(item => {
+  const matches = materials.filter(item => {
     const matchesTerm = comparable(item.title + ' ' + item.author + ' ' + item.label + ' ' + item.description + ' ' + item.type).includes(term);
     const matchesFilter = selectedFilter === 'todos' || selectedFilter === item.area || (selectedFilter === 'gratuitos' && !item.price);
     return matchesTerm && matchesFilter;
   });
-  const count = shown.length;
-  document.querySelector('#result').textContent = count === 0 ? 'Nenhum material encontrado.' : count + (count === 1 ? ' material encontrado' : ' materiais encontrados');
+  const count = matches.length;
+  const pages = Math.max(1, Math.ceil(count / catalogSize));
+  catalogPage = Math.min(catalogPage, pages);
+  const first = (catalogPage - 1) * catalogSize;
+  const shown = matches.slice(first, first + catalogSize);
+  document.querySelector('#result').textContent = count === 0 ? 'Nenhum material encontrado.'
+    : pages > 1 ? `Mostrando ${first + 1}–${first + shown.length} de ${count} materiais`
+    : count + (count === 1 ? ' material encontrado' : ' materiais encontrados');
+  document.querySelector('#catalog-pages').innerHTML = renderPagination(catalogPage, pages, catalogUrl, 'Páginas do catálogo');
   grid.innerHTML = count === 0
     ? '<div class="empty-state"><p>Tente outra palavra ou remova os filtros para ver todos os materiais.</p>' +
       '<button class="button outlined" type="button" data-clear-filters>Limpar busca e filtros</button></div>'
@@ -66,9 +98,11 @@ function renderCatalog() {
 function clearFilters() {
   query.value = '';
   selectedFilter = 'todos';
+  catalogPage = 1;
   for (const chip of document.querySelectorAll('#filters [data-filter]')) {
     chip.setAttribute('aria-pressed', String(chip.dataset.filter === 'todos'));
   }
+  history.replaceState(null, '', catalogUrl());
   renderCatalog();
   query.focus();
 }
@@ -171,6 +205,13 @@ if (profileForm) {
     }
   }
   renderDemoAccount(readProfile(profileForm));
+  let created = false;
+  try { created = Boolean(localStorage.getItem('miudoverso:perfil-criado')); } catch {}
+  document.querySelector('#signup-banner').hidden = created;
+  document.querySelector('#demo-account .label').textContent = created ? 'Seu perfil' : 'Conta de demonstração';
+  if (new URLSearchParams(location.search).get('perfil') === 'criado') {
+    feedback.textContent = 'Perfil criado! Complete as informações abaixo para deixá-lo mais completo.';
+  }
   profileForm.addEventListener('input', () => { feedback.textContent = 'Você tem alterações não salvas.'; });
   profileForm.addEventListener('submit', event => {
     event.preventDefault();
@@ -190,12 +231,33 @@ if (profileForm) {
 }
 
 if (grid) {
-  query.addEventListener('input', renderCatalog);
+  readCatalogUrl();
+  query.addEventListener('input', () => {
+    catalogPage = 1;
+    history.replaceState(null, '', catalogUrl());
+    renderCatalog();
+  });
   document.querySelector('#filters').addEventListener('click', event => {
     const button = event.target.closest('[data-filter]');
     if (!button) return;
     selectedFilter = button.dataset.filter;
+    catalogPage = 1;
     for (const chip of event.currentTarget.querySelectorAll('[data-filter]')) chip.setAttribute('aria-pressed', String(chip === button));
+    history.replaceState(null, '', catalogUrl());
+    renderCatalog();
+  });
+  document.querySelector('#catalog-pages').addEventListener('click', event => {
+    const link = event.target.closest('a[data-page]');
+    if (!link || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    event.preventDefault();
+    catalogPage = Number(link.dataset.page);
+    history.pushState(null, '', catalogUrl());
+    renderCatalog();
+    document.querySelector('#materiais').scrollIntoView({ block: 'start' });
+    document.querySelector('#result').focus({ preventScroll: true });
+  });
+  window.addEventListener('popstate', () => {
+    readCatalogUrl();
     renderCatalog();
   });
 }
@@ -207,29 +269,41 @@ document.addEventListener('click', event => {
   const { save } = button.dataset;
   if (save) {
     if (saved.has(save)) saved.delete(save);
-    else saved.add(save);
+    else { saved.add(save); track('favoritar:' + save); }
     button.setAttribute('aria-pressed', String(saved.has(save)));
     try { localStorage.setItem('miudoverso:saved', JSON.stringify([...saved])); } catch {}
   }
-  if (button.hasAttribute('data-buy')) document.querySelector('#purchase-feedback').textContent = 'Simulação concluída. Nenhum pagamento foi realizado.';
+  if (button.hasAttribute('data-buy')) {
+    document.querySelector('#purchase-feedback').textContent = 'Simulação concluída. Nenhum pagamento foi realizado.';
+    track('compra-simulada:' + location.pathname.split('/').filter(Boolean).pop());
+  }
   if (button.hasAttribute('data-report')) report();
   if (button.hasAttribute('data-clear-filters')) clearFilters();
   const { like, follow, feed: feedFilter, deletePost } = button.dataset;
   if (like) {
     if (likes.has(like)) likes.delete(like);
-    else likes.add(like);
+    else { likes.add(like); track('curtir:' + like); }
     storeSet('miudoverso:likes', likes);
     syncLikes();
   }
   if (follow) {
     if (following.has(follow)) following.delete(follow);
-    else following.add(follow);
+    else { following.add(follow); track('seguir:' + follow); }
     storeSet('miudoverso:following', following);
     syncFollowing();
   }
   if (feedFilter) {
     selectedFeed = feedFilter;
+    feedLimit = feedSize;
     applyFeedFilter();
+  }
+  if (button.id === 'feed-more') {
+    const firstNew = feedLimit;
+    feedLimit += feedSize;
+    applyFeedFilter();
+    const posts = [...feed.querySelectorAll('.post:not([data-author="me"]):not([hidden])')];
+    posts[firstNew]?.querySelector('a, button')?.focus();
+    track('feed:carregar-mais');
   }
   if (deletePost) {
     try { localStorage.setItem(postsStorageKey, JSON.stringify(loadPosts().filter(post => post.id !== deletePost))); } catch {}
@@ -250,6 +324,7 @@ dialog.addEventListener('submit', event => {
     }
     form.reset();
     feedback.textContent = 'Envio simulado. No piloto, o material poderia passar por revisão antes de aparecer no catálogo.';
+    track('material:envio-simulado');
   }
   if (form.id === 'report-form') {
     form.reset();
@@ -266,17 +341,24 @@ document.querySelector('#waitlist')?.addEventListener('submit', async event => {
     feedback.textContent = 'Simulação concluída. Nenhum dado foi gravado na lista de espera.';
     return;
   }
-  const data = Object.fromEntries(new FormData(form));
+  const fields = new FormData(form);
+  const data = {
+    email: fields.get('email'), area: fields.get('area'), interesse: fields.get('interesse'),
+    areas: fields.getAll('areas'), website: fields.get('website'), consent: fields.has('consent')
+  };
   button.disabled = true;
   feedback.textContent = 'Enviando sua inscrição…';
   try {
-    const response = await fetch('/api/lista-de-espera', {
+    const response = await fetch(form.dataset.endpoint, {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ ...data, consent:data.consent === 'on' })
+      body:JSON.stringify(data)
     });
     const payload = await response.json();
     feedback.textContent = payload.message;
-    if (response.ok) form.reset();
+    if (response.ok) {
+      form.reset();
+      window.miudoversoMetrica?.('lista-de-espera:inscricao');
+    }
   } catch {
     feedback.textContent = 'Não foi possível confirmar a inscrição. Tente novamente.';
   } finally {
@@ -306,11 +388,19 @@ function syncFollowing() {
 function applyFeedFilter() {
   if (!feed) return;
   let visible = 0;
+  let matching = 0;
   for (const post of feed.querySelectorAll('.post')) {
-    const show = selectedFeed === 'todos' || post.dataset.author === 'me' || following.has(post.dataset.author);
+    const own = post.dataset.author === 'me';
+    const matches = own || selectedFeed === 'todos' || following.has(post.dataset.author);
+    if (matches && !own) matching++;
+    const show = matches && (own || matching <= feedLimit);
     post.hidden = !show;
     if (show) visible++;
   }
+  const remaining = Math.max(0, matching - feedLimit);
+  const more = document.querySelector('#feed-more');
+  more.hidden = remaining === 0;
+  more.textContent = 'Carregar mais publicações (' + remaining + ')';
   document.querySelector('#feed-empty').hidden = visible > 0;
   for (const chip of document.querySelectorAll('#feed-filters [data-feed]')) {
     chip.setAttribute('aria-pressed', String(chip.dataset.feed === selectedFeed));
@@ -338,6 +428,39 @@ function timeLabel(iso) {
   if (minutes < 1440) return 'há ' + Math.floor(minutes / 60) + ' h';
   return new Date(iso).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
 }
+function attachment(value = '') {
+  const [kind, key] = [value.slice(0, value.indexOf(':')), value.slice(value.indexOf(':') + 1)];
+  if (kind === 'material') {
+    const item = materials.find(entry => entry.id === key);
+    if (item) return `<a class="post-attachment" href="${materialLink(item)}">
+      <span class="post-attachment-art ${escapeHtml(item.color)}" aria-hidden="true">${escapeHtml(item.art)}</span>
+      <span><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.type)} · ${escapeHtml(item.price || 'Gratuito')}</small></span></a>`;
+  }
+  const resource = biblioteca.find(entry => entry.path === key);
+  if (kind === 'visual' && resource) {
+    return `<img class="post-image" src="${new URL(resource.path, import.meta.url).href}" alt="${escapeHtml(resource.alt)}" width="1536" height="1024" loading="lazy">`;
+  }
+  if (kind === 'sons' && resource) {
+    return `<a class="text-link" href="${new URL('sons/', import.meta.url).href}">Ouvir ${escapeHtml(resource.title)} no Miudoverso Sons</a>`;
+  }
+  return '';
+}
+function renderProfileCard() {
+  const card = document.querySelector('#my-profile-card');
+  if (!card) return;
+  let created = false;
+  try { created = Boolean(localStorage.getItem('miudoverso:perfil-criado')); } catch {}
+  const profile = storedProfile();
+  const name = profile.displayName || profile.fullName;
+  card.innerHTML = created && name
+    ? `<span class="avatar violet" aria-hidden="true">${escapeHtml(profileInitials(name))}</span>
+       <div><p class="label">Seu perfil</p><h3>${escapeHtml(name)}</h3>${profile.role ? '<p>' + escapeHtml(profile.role) + '</p>' : ''}</div>
+       <a class="text-link" href="${new URL('meu-miudoverso/', import.meta.url).href}">Editar no Meu Miudoverso</a>`
+    : `<div><h3>Apareça no Conecta</h3><p>Crie seu perfil para publicar no feed com seu nome.</p></div>
+       <a class="button primary" href="${new URL('criar-perfil/', import.meta.url).href}">Criar meu perfil</a>`;
+  card.classList.toggle('is-created', created);
+  card.hidden = false;
+}
 function renderMyPosts() {
   if (!composer) return;
   const profile = storedProfile();
@@ -355,6 +478,7 @@ function renderMyPosts() {
       </header>
       <p class="post-kind">Sua publicação · demonstração</p>
       <p class="post-text">${escapeHtml(post.text)}</p>
+      ${attachment(post.attach)}
     </article>`).join('');
   applyFeedFilter();
 }
@@ -373,6 +497,7 @@ function refreshSavedMaterials() {
   syncLikes();
   syncFollowing();
   renderMyPosts();
+  renderProfileCard();
 }
 window.addEventListener('pageshow', event => {
   if (event.persisted) refreshSavedMaterials();
@@ -385,7 +510,8 @@ composer?.addEventListener('submit', event => {
     field.focus();
     return;
   }
-  const posts = [{ id: 'u' + Date.now(), text, createdAt: new Date().toISOString() }, ...loadPosts()].slice(0, 20);
+  const attach = composer.elements.attach?.value ?? '';
+  const posts = [{ id: 'u' + Date.now(), text, attach, createdAt: new Date().toISOString() }, ...loadPosts()].slice(0, 20);
   try {
     localStorage.setItem(postsStorageKey, JSON.stringify(posts));
   } catch {
@@ -393,6 +519,7 @@ composer?.addEventListener('submit', event => {
     return;
   }
   composer.reset();
+  track('feed:publicar');
   selectedFeed = 'todos';
   renderMyPosts();
 });

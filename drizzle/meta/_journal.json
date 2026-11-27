@@ -2,6 +2,7 @@
   "version": "7",
   "dialect": "sqlite",
   "entries": [
-    {"idx": 0, "version": "6", "when": 1795568400000, "tag": "0000_waitlist", "breakpoints": false}
+    {"idx": 0, "version": "6", "when": 1795568400000, "tag": "0000_waitlist", "breakpoints": false},
+    {"idx": 1, "version": "6", "when": 1795760000000, "tag": "0001_areas_eventos", "breakpoints": false}
   ]
 }

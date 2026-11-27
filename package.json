@@ -5,6 +5,12 @@
   "scripts": {
     "build": "node build.mjs",
     "preview": "node preview.mjs",
-    "publicar": "bash publicar.sh"
+    "publicar": "bash publicar.sh",
+    "relatorio": "bash relatorio.sh",
+    "test": "node --test --test-concurrency=1 \"testes/*.test.mjs\"",
+    "configurar-publicacao": "bash configurar-publicacao.sh"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
   }
 }

@@ -1,0 +1,73 @@
+<section class="wrap hero creators-hero" aria-labelledby="creators-title">
+  <div class="hero-copy">
+    <p class="eyebrow">Miudoverso para quem cria</p>
+    <h1 id="creators-title">Seus materiais, <em>sua lojinha.</em></h1>
+    <p class="lede">Publique atividades e e-books, venda para outros profissionais e acompanhe tudo pelo seu perfil no Miudoverso Conecta.</p>
+    <div class="actions">
+      <a class="button primary" href="@base@criar-perfil/">Criar meu perfil</a>
+      <a class="button outlined" href="#simulador">Simular meus ganhos</a>
+    </div>
+  </div>
+  <ol class="creator-steps" aria-label="Como funciona">
+    <li><strong>Crie seu perfil</strong><span>Conte sua formação, especialidades e como você atende.</span></li>
+    <li><strong>Envie seus materiais</strong><span>Atividades em PDF, cadernos e e-books, gratuitos ou pagos.</span></li>
+    <li><strong>Passe pela revisão</strong><span>A moderação confere a autoria ou a autorização de distribuição.</span></li>
+    <li><strong>Venda e acompanhe</strong><span>Seus materiais aparecem no catálogo e na sua lojinha.</span></li>
+  </ol>
+</section>
+
+<section class="wrap section simulator-section" id="simulador" aria-labelledby="simulator-title">
+  <div class="simulator">
+    <div>
+      <p class="eyebrow">Simulador</p>
+      <h2 id="simulator-title">Quanto você receberia</h2>
+      <p>O modelo em avaliação prevê uma comissão de 10% a 20% por venda. Ajuste o preço e as vendas para ver quanto ficaria com você.</p>
+    </div>
+    <form class="form simulator-form" id="earnings">
+      <label>Preço do material (R$)<input name="price" type="number" inputmode="decimal" min="1" max="999" step="0.01" value="19.90" required></label>
+      <label>Vendas por mês<input name="sales" type="number" inputmode="numeric" min="1" max="9999" step="1" value="20" required></label>
+      <output class="simulator-result" for="earnings" id="earnings-result" aria-live="polite">
+        <span>Você receberia por mês</span>
+        <strong id="earnings-range">R$ 318,40 a R$ 358,20</strong>
+        <small id="earnings-detail">Por venda: R$ 15,92 com comissão de 20% ou R$ 17,91 com comissão de 10%.</small>
+      </output>
+      <p class="form-note">Valores de exemplo. A comissão e a forma de pagamento serão definidas no piloto.</p>
+    </form>
+  </div>
+</section>
+
+<section class="wrap section plans-section" aria-labelledby="plans-title">
+  <div class="section-head"><div><h2 id="plans-title">Planos para quem cria</h2><p>Proposta em avaliação no piloto.</p></div></div>
+  <div class="plans">
+    <article class="plan">
+      <h3>Gratuito</h3>
+      <p class="plan-price">R$ 0</p>
+      <ul>
+        <li>Perfil profissional no Conecta</li>
+        <li>Publicação de materiais gratuitos</li>
+        <li>Lojinha com número limitado de produtos</li>
+        <li>Downloads mensais do catálogo</li>
+      </ul>
+      <a class="button outlined" href="@base@criar-perfil/">Começar grátis</a>
+    </article>
+    <article class="plan plan-pro">
+      <p class="plan-badge">Mais completo</p>
+      <h3>Pro</h3>
+      <p class="plan-price">Preço em avaliação</p>
+      <ul>
+        <li>Tudo do plano Gratuito</li>
+        <li>Mais downloads por mês</li>
+        <li>Destaque do perfil no Conecta</li>
+        <li>Lojinha sem limite de produtos</li>
+      </ul>
+      <a class="button accent" href="@base@lista-de-espera/">Quero o plano Pro</a>
+    </article>
+  </div>
+</section>
+
+<section class="wrap section faq">
+  <h2>Perguntas de quem cria</h2>
+  <details><summary>Quem pode vender no Miudoverso?</summary><p>Profissionais com materiais de autoria própria ou com autorização de distribuição. Cada material passa por revisão antes de aparecer no catálogo.</p></details>
+  <details><summary>Posso oferecer materiais gratuitos?</summary><p>Sim. Materiais gratuitos ajudam as pessoas a conhecer seu trabalho e levam visitas para sua lojinha.</p></details>
+  <details><summary>Como vou receber pelas vendas?</summary><p>A forma de pagamento e os prazos serão definidos durante o piloto. Quem está na lista de espera recebe essas informações primeiro.</p></details>
+</section>
