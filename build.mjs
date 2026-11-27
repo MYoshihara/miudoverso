@@ -26,6 +26,9 @@ const pages = [
   ['/privacidade/', 'privacidade', 'Política de privacidade | Miudoverso', 'Como a prévia do Miudoverso trata os seus dados.'],
   ['/404/', '404', 'Página não encontrada | Miudoverso', 'Esta página não existe ou mudou de endereço.'],
   ['/inspira/rimas/', 'rimas', 'Como adaptar uma atividade de rimas | Miudoverso Inspira', 'Como variar uma atividade de rimas para diferentes turmas.', 'inspira'],
+  ['/inspira/jogos-de-escuta/', 'jogos-de-escuta', 'Quatro jogos de escuta com sons do dia a dia | Miudoverso Inspira', 'Propostas rápidas para treinar atenção auditiva em casa, na escola ou no consultório.', 'inspira'],
+  ['/inspira/imagens-e-vocabulario/', 'imagens-e-vocabulario', 'Como usar uma imagem para ampliar o vocabulário | Miudoverso Inspira', 'Três perguntas para tirar mais de cada figura.', 'inspira'],
+  ['/inspira/precificar-material/', 'precificar-material', 'Quanto cobrar pelo seu primeiro material | Miudoverso Inspira', 'Um roteiro simples para definir o preço sem desvalorizar o seu trabalho.', 'inspira'],
   ['/inspira/ebook-autoral/', 'ebook-autoral', 'Antes de publicar seu primeiro e-book | Miudoverso Inspira', 'Uma revisão para quem quer publicar atividades, guias ou cadernos digitais.', 'inspira'],
   ...profissionais.map(person => [
     '/' + profilePath(person.slug), 'perfil-profissional', person.name + ' | Miudoverso Conecta',
@@ -297,7 +300,8 @@ function materialDetails(item, base) {
     id: escapeHtml(item.id),
     bookmark,
     related: materials.filter(other => other.id !== item.id)
-      .map(other => renderMaterialCard(other, base + materialPath(other))).join('')
+      .sort((a, b) => (b.authorSlug === item.authorSlug) - (a.authorSlug === item.authorSlug) || (b.area === item.area) - (a.area === item.area))
+      .slice(0, 3).map(other => renderMaterialCard(other, base + materialPath(other))).join('')
   };
 }
 
@@ -372,7 +376,8 @@ for (const [route, fragment, title, description, active, script, data] of pages)
       '<optgroup label="Sons">' + biblioteca.filter(item => item.mime.startsWith('audio/')).map(item => option('sons:' + item.path, item.title)).join('') + '</optgroup>';
   }
   if (fragment === 'inicio') {
-    bodyValues.featured = materials.map(item => renderMaterialCard(item, base + materialPath(item))).join('');
+    bodyValues.featured = ['rimas', 'bingo', 'pranchas'].map(id => materials.find(item => item.id === id))
+      .map(item => renderMaterialCard(item, base + materialPath(item))).join('');
     bodyValues['latest-posts'] = publicacoes.slice(0, 2).map(post => renderPost(post, base)).join('');
   }
   if (fragment === 'material') bodyValues = materialDetails(data, base);

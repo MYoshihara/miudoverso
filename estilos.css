@@ -196,7 +196,7 @@ nav a:hover,.text-link:hover,footer a:hover { color:var(--teal) }
 .material-price strong { color:var(--ink); font-size:1.25rem }
 .creator { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:16px; padding:21px; border-radius:18px; background:#ffefc0 }
 .creator p { margin-top:4px }
-.reading { display:grid; grid-template-columns:1fr 1fr; gap:17px }
+.reading { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:17px }
 .reading article { padding:23px; display:grid; gap:9px }
 .join { display:grid; grid-template-columns:1fr 1fr; gap:clamp(20px,6vw,80px); background:var(--dark); border-radius:25px; padding:clamp(24px,5vw,56px); color:white }
 .join .eyebrow,.join p { color:#f3e8fc }
@@ -465,6 +465,7 @@ a.post-author:hover { color:var(--purple); text-decoration:underline; text-under
 #following ul { padding-left:20px; margin:0 }
 
 @media (max-width:850px) {
+  .reading { grid-template-columns:repeat(2,minmax(0,1fr)) }
   .conecta-layout { grid-template-columns:minmax(0,1fr) }
   .conecta-aside { display:contents }
   .conecta-aside > h2 { order:-2 }
@@ -590,3 +591,5 @@ a.post-author:hover { color:var(--purple); text-decoration:underline; text-under
   .composer-attach { flex-basis:100% }
   .composer-attach select { flex:1; max-width:none }
 }
+.composer,.composer-attach { min-width:0 }
+.composer-attach select { min-width:0; width:100% }
