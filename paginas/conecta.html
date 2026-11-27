@@ -13,6 +13,7 @@
             </div>
             <textarea id="composer-text" name="text" rows="3" maxlength="500" required placeholder="O que você aplicou ou criou esta semana?"></textarea>
             <div class="composer-actions">
+              <label class="composer-attach">Anexar<select name="attach">@attach-options@</select></label>
               <p class="form-note">Demonstração: a publicação fica só neste navegador.</p>
               <button class="button primary" type="submit">Publicar</button>
             </div>
@@ -33,9 +34,10 @@
           </div>
         </div>
         <aside class="conecta-aside" aria-labelledby="profiles-title">
+          <div class="my-profile-card" id="my-profile-card" hidden></div>
           <h2 id="profiles-title">Profissionais</h2>
           <div class="profile-list" id="profiles">@profiles@</div>
-          <div class="creator"><div><h2>Você cria materiais autorais?</h2><p>Veja como seria enviar uma atividade ou um e-book para revisão.</p></div><button class="button outlined" id="publish" type="button">Simular publicação</button></div>
+          <div class="creator"><div><h2>Você cria materiais autorais?</h2><p>Venda atividades e e-books na sua lojinha. Veja a comissão e simule seus ganhos.</p></div><div class="actions"><a class="button primary" href="@base@criadores/">Saiba como vender</a><button class="button outlined" id="publish" type="button">Simular publicação</button></div></div>
         </aside>
       </div>
     </div>

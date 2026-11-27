@@ -1,5 +1,5 @@
 const assetVersion = new URL(import.meta.url).search;
-const [{ demoProfile, materials, materialPath, profissionais }, { escapeHtml, renderMaterialCard }] = await Promise.all([
+const [{ biblioteca, demoProfile, materials, materialPath, profissionais }, { escapeHtml, renderMaterialCard }] = await Promise.all([
   import('./dados.js' + assetVersion),
   import('./material-card.js' + assetVersion)
 ]);
@@ -173,6 +173,13 @@ if (profileForm) {
     }
   }
   renderDemoAccount(readProfile(profileForm));
+  let created = false;
+  try { created = Boolean(localStorage.getItem('miudoverso:perfil-criado')); } catch {}
+  document.querySelector('#signup-banner').hidden = created;
+  document.querySelector('#demo-account .label').textContent = created ? 'Seu perfil' : 'Conta de demonstração';
+  if (new URLSearchParams(location.search).get('perfil') === 'criado') {
+    feedback.textContent = 'Perfil criado! Complete as informações abaixo para deixá-lo mais completo.';
+  }
   profileForm.addEventListener('input', () => { feedback.textContent = 'Você tem alterações não salvas.'; });
   profileForm.addEventListener('submit', event => {
     event.preventDefault();
@@ -351,6 +358,39 @@ function timeLabel(iso) {
   if (minutes < 1440) return 'há ' + Math.floor(minutes / 60) + ' h';
   return new Date(iso).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
 }
+function attachment(value = '') {
+  const [kind, key] = [value.slice(0, value.indexOf(':')), value.slice(value.indexOf(':') + 1)];
+  if (kind === 'material') {
+    const item = materials.find(entry => entry.id === key);
+    if (item) return `<a class="post-attachment" href="${materialLink(item)}">
+      <span class="post-attachment-art ${escapeHtml(item.color)}" aria-hidden="true">${escapeHtml(item.art)}</span>
+      <span><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.type)} · ${escapeHtml(item.price || 'Gratuito')}</small></span></a>`;
+  }
+  const resource = biblioteca.find(entry => entry.path === key);
+  if (kind === 'visual' && resource) {
+    return `<img class="post-image" src="${new URL(resource.path, import.meta.url).href}" alt="${escapeHtml(resource.alt)}" width="1536" height="1024" loading="lazy">`;
+  }
+  if (kind === 'sons' && resource) {
+    return `<a class="text-link" href="${new URL('sons/', import.meta.url).href}">Ouvir ${escapeHtml(resource.title)} no Miudoverso Sons</a>`;
+  }
+  return '';
+}
+function renderProfileCard() {
+  const card = document.querySelector('#my-profile-card');
+  if (!card) return;
+  let created = false;
+  try { created = Boolean(localStorage.getItem('miudoverso:perfil-criado')); } catch {}
+  const profile = storedProfile();
+  const name = profile.displayName || profile.fullName;
+  card.innerHTML = created && name
+    ? `<span class="avatar violet" aria-hidden="true">${escapeHtml(profileInitials(name))}</span>
+       <div><p class="label">Seu perfil</p><h3>${escapeHtml(name)}</h3>${profile.role ? '<p>' + escapeHtml(profile.role) + '</p>' : ''}</div>
+       <a class="text-link" href="${new URL('meu-miudoverso/', import.meta.url).href}">Editar no Meu Miudoverso</a>`
+    : `<div><h3>Apareça no Conecta</h3><p>Crie seu perfil para publicar no feed com seu nome.</p></div>
+       <a class="button primary" href="${new URL('criar-perfil/', import.meta.url).href}">Criar meu perfil</a>`;
+  card.classList.toggle('is-created', created);
+  card.hidden = false;
+}
 function renderMyPosts() {
   if (!composer) return;
   const profile = storedProfile();
@@ -368,6 +408,7 @@ function renderMyPosts() {
       </header>
       <p class="post-kind">Sua publicação · demonstração</p>
       <p class="post-text">${escapeHtml(post.text)}</p>
+      ${attachment(post.attach)}
     </article>`).join('');
   applyFeedFilter();
 }
@@ -386,6 +427,7 @@ function refreshSavedMaterials() {
   syncLikes();
   syncFollowing();
   renderMyPosts();
+  renderProfileCard();
 }
 window.addEventListener('pageshow', event => {
   if (event.persisted) refreshSavedMaterials();
@@ -398,7 +440,8 @@ composer?.addEventListener('submit', event => {
     field.focus();
     return;
   }
-  const posts = [{ id: 'u' + Date.now(), text, createdAt: new Date().toISOString() }, ...loadPosts()].slice(0, 20);
+  const attach = composer.elements.attach?.value ?? '';
+  const posts = [{ id: 'u' + Date.now(), text, attach, createdAt: new Date().toISOString() }, ...loadPosts()].slice(0, 20);
   try {
     localStorage.setItem(postsStorageKey, JSON.stringify(posts));
   } catch {

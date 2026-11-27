@@ -21,6 +21,8 @@ const pages = [
   ['/conecta/', 'conecta', 'Miudoverso Conecta', 'Feed, perfis, portfólios e lojinhas de profissionais de pedagogia e fonoaudiologia.', 'conecta', true],
   ['/meu-miudoverso/', 'meu-miudoverso', 'Meu Miudoverso', 'Seus materiais salvos e seu perfil profissional.', 'meu-miudoverso', true],
   ['/lista-de-espera/', 'lista-de-espera', 'Lista de espera | Miudoverso', 'Participe da primeira turma do Miudoverso.', '', true],
+  ['/criadores/', 'criadores', 'Miudoverso para quem cria', 'Publique e venda atividades e e-books: comissão, planos e simulador de ganhos.', 'conecta', 'criadores.js'],
+  ['/criar-perfil/', 'criar-perfil', 'Criar meu perfil | Miudoverso', 'Crie seu perfil profissional no Miudoverso Conecta.', 'meu-miudoverso', 'cadastro.js'],
   ['/privacidade/', 'privacidade', 'Política de privacidade | Miudoverso', 'Como a prévia do Miudoverso trata os seus dados.'],
   ['/404/', '404', 'Página não encontrada | Miudoverso', 'Esta página não existe ou mudou de endereço.'],
   ['/inspira/rimas/', 'rimas', 'Como adaptar uma atividade de rimas | Miudoverso Inspira', 'Como variar uma atividade de rimas para diferentes turmas.', 'inspira'],
@@ -41,6 +43,8 @@ const assets = [
   ['estilos.css', 'text/css; charset=utf-8'],
   ['miudoverso.js', 'text/javascript; charset=utf-8'],
   ['metricas.js', 'text/javascript; charset=utf-8'],
+  ['criadores.js', 'text/javascript; charset=utf-8'],
+  ['cadastro.js', 'text/javascript; charset=utf-8'],
   ['perfil-tabs.js', 'text/javascript; charset=utf-8'],
   ['material-card.js', 'text/javascript; charset=utf-8'],
   ['dados.js', 'text/javascript; charset=utf-8'],
@@ -361,6 +365,11 @@ for (const [route, fragment, title, description, active, script, data] of pages)
   if (fragment === 'conecta') {
     bodyValues.profiles = profileCards(base);
     bodyValues.posts = publicacoes.map(post => renderPost(post, base)).join('');
+    const option = (value, label) => '<option value="' + escapeHtml(value) + '">' + escapeHtml(label) + '</option>';
+    bodyValues['attach-options'] = option('', 'Nada') +
+      '<optgroup label="Materiais">' + materials.map(item => option('material:' + item.id, item.title)).join('') + '</optgroup>' +
+      '<optgroup label="Visual">' + biblioteca.filter(item => item.mime.startsWith('image/')).map(item => option('visual:' + item.path, item.title)).join('') + '</optgroup>' +
+      '<optgroup label="Sons">' + biblioteca.filter(item => item.mime.startsWith('audio/')).map(item => option('sons:' + item.path, item.title)).join('') + '</optgroup>';
   }
   if (fragment === 'inicio') {
     bodyValues.featured = materials.map(item => renderMaterialCard(item, base + materialPath(item))).join('');
