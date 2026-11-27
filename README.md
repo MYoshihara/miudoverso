@@ -63,6 +63,44 @@ Junto com o site vão:
 
 As inscrições e as estatísticas ficam num arquivo SQLite fora da pasta pública, em `/home/matheusy/miudoverso-dados/`. O `npm run publicar` cria essa pasta com acesso só para o seu usuário.
 
+### Publicação automática pelo GitHub
+
+A Action `.github/workflows/publicar.yml` roda os testes em cada pull request. Quando o `main` é atualizado, ela roda os testes e, se passarem, executa o `npm run publicar`. Também dá para publicar na mão pela aba **Actions › Testar e publicar › Run workflow**. Enquanto o acesso abaixo não estiver configurado, a Action só roda os testes e avisa que pulou a publicação.
+
+Configuração, feita uma única vez no Mac:
+
+1. Crie uma chave SSH só para a Action, sem senha:
+
+   ```sh
+   ssh-keygen -t ed25519 -N "" -C "github-actions-miudoverso" -f ~/.ssh/miudoverso_deploy
+   ```
+
+2. Autorize a chave na Hostinger:
+
+   ```sh
+   ssh hostinger 'mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys' < ~/.ssh/miudoverso_deploy.pub
+   ```
+
+3. Veja o servidor, a porta e o usuário que o alias `hostinger` usa:
+
+   ```sh
+   ssh -G hostinger | grep -E '^(hostname|port|user) '
+   ```
+
+4. Gere a impressão digital do servidor, trocando PORTA e SERVIDOR pelos valores do passo 3:
+
+   ```sh
+   ssh-keyscan -p PORTA SERVIDOR
+   ```
+
+5. No GitHub, abra **Settings › Environments**, crie o ambiente `preview` e cadastre:
+   - em **Environment secrets**:
+     - `HOSTINGER_SSH_KEY`: o conteúdo de `~/.ssh/miudoverso_deploy` (a chave privada, sem `.pub`);
+     - `HOSTINGER_KNOWN_HOSTS`: a saída do passo 4;
+   - em **Environment variables**: `HOSTINGER_HOST`, `HOSTINGER_PORT` e `HOSTINGER_USER`, com os valores do passo 3.
+
+A chave privada só fica no seu Mac e nos segredos do GitHub. Para revogar o acesso, apague a linha `github-actions-miudoverso` do `~/.ssh/authorized_keys` na Hostinger.
+
 ## Ver inscrições e estatísticas
 
 ```sh
