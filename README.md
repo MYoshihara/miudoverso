@@ -67,7 +67,22 @@ As inscrições e as estatísticas ficam num arquivo SQLite fora da pasta públi
 
 A Action `.github/workflows/publicar.yml` roda os testes em cada pull request. Quando o `main` é atualizado, ela roda os testes e, se passarem, executa o `npm run publicar`. Também dá para publicar na mão pela aba **Actions › Testar e publicar › Run workflow**. Enquanto o acesso abaixo não estiver configurado, a Action só roda os testes e avisa que pulou a publicação.
 
-Configuração, feita uma única vez no Mac:
+Para configurar, rode uma única vez no Mac, na pasta do projeto:
+
+```sh
+npm run configurar-publicacao
+```
+
+O script:
+
+1. cria uma chave SSH só para a Action;
+2. autoriza a chave na Hostinger pelo alias `hostinger`;
+3. testa o acesso com a chave nova;
+4. cadastra a chave e os dados do servidor no ambiente `preview` do GitHub.
+
+Se o GitHub CLI (`gh`) estiver instalado e com login, o último passo é automático. Se não estiver, o script abre a página do GitHub e copia cada valor para a área de transferência, um de cada vez, para você colar. A chave privada nunca aparece na tela.
+
+Se preferir fazer tudo à mão:
 
 1. Crie uma chave SSH só para a Action, sem senha:
 
